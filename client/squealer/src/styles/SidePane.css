@@ -1,0 +1,10 @@
+#sidepane-container {
+    background-color: var(--color-background-100);
+    height: 100vh;
+    border-left: solid 0.2px var(--color-background-400);
+}
+
+#floatingSearch {
+    background-color: white;
+    color: black;
+}
