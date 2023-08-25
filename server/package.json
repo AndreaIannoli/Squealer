@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/AndreaIannoli/Squealer#readme",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "mongoose": "^7.4.4"
   }
 }
