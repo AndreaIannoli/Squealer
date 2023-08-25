@@ -1,0 +1,27 @@
+{
+  "name": "squealer",
+  "version": "1.0.0",
+  "description": "An Anti-Twitter social",
+  "main": "App.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node App.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndreaIannoli/Squealer.git"
+  },
+  "keywords": [
+    "social",
+    "twitter"
+  ],
+  "author": "Andrea Iannoli, Alessandro Mazzini",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndreaIannoli/Squealer/issues"
+  },
+  "homepage": "https://github.com/AndreaIannoli/Squealer#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
