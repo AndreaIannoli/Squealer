@@ -1,6 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-
+import {
+    BrowserRouter,
+    createBrowserRouter,
+    RouterProvider,
+} from "react-router-dom";
+import '@yaireo/tagify/dist/tagify.css';
 // Bootstrap CSS
 import "bootstrap/dist/css/bootstrap.min.css";
 // Bootstrap Bundle JS
@@ -13,23 +18,33 @@ import $ from 'jquery';
 import Popper from 'popper.js';
 
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
-import Navbar from "./components/Navbar";
-import ScrollPane from "./components/ScrollPane";
-import SidePane from "./components/SidePane";
+
+import axios from 'axios';
+
+import Home from "./pages/Home";
+import Registration from "./pages/Registration";
+import Login from "./pages/Login";
+
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <Home />,
+    },
+    {
+        path: "/login",
+        element: <Login />,
+    },
+    {
+        path: "/register",
+        element: <Registration />,
+    },
+]);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-      <div className='container-fluid'>
-          <div className='row flex-column flex-md-row'>
-              <div className='col-12 col-md-3 col-lg-2 p-0'><Navbar /></div>
-              <div className='col-12 col-md-9 col-lg-7 p-0 z-0'><ScrollPane /></div>
-              <div className='col-lg-3 d-none d-lg-inline-block p-0 z-0'><SidePane /></div>
-          </div>
-      </div>
-      <div className='vr'></div>
+        <RouterProvider router={router} />
   </React.StrictMode>
 );
 

@@ -44,6 +44,11 @@
         position: fixed;
     }
 
+    #navbar-authentication-container {
+        position: fixed;
+        width: 40%;
+    }
+
     #navbar-propic {
         width: 50px !important;
     }

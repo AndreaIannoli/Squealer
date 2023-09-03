@@ -49,3 +49,11 @@ code {
 .vertical-divider {
   width: 1px !important;
 }
+
+.back-arrow {
+  font-size: 4em;
+}
+
+.back-arrow-btn:active {
+  border-style: none;
+}
