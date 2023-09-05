@@ -96,11 +96,24 @@ app.get("/existence_user", async (request, response) => {
     }
 });
 
+app.get("/propic_user", async (request, response) => {
+    try {
+        const user = await userModel.findOne({ username: request.query.username }, { propic: true, _id: false });
+        console.log(user);
+        if(user) {
+            response.send(user.propic);
+        } else {
+            response.send('user doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
 app.get("/search", async (request, response) => {
     try {
         const substringToSearch = request.query.value; // Replace with the substring you want to search for
         const result = await userModel.find({ username: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, username: true });
-        console.log(result)
         const usernames = result.map(user => '@' + user.username);
         response.send(usernames);
     } catch (error) {
@@ -115,6 +128,29 @@ app.get("/users", async (request, response) => {
     try {
         response.send(users);
     } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+app.get("/squeals", async (request, response) => {
+    try {
+        const username = '@' + await authenticateUser(request);
+
+        const inbox = await inboxModel.findOne({receiver: username}, {squealsIds: true, _id: false});
+        console.log(inbox);
+        if(inbox) {
+            const squealsIds = inbox.squealsIds;
+            console.log(inbox);
+            let squeals = [];
+            for(let squealId of squealsIds) {
+                const squeal = await squealModel.findOne({_id: squealId}, {_id: false});
+                console.log(squeal);
+                squeals.push(squeal);
+            }
+            response.send(squeals);
+        }
+    } catch (error) {
+        console.log(error);
         response.status(500).send(error);
     }
 });
