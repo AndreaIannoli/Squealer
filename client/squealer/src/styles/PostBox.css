@@ -37,3 +37,7 @@ label:focus,
 .postbox-btn {
     color: var(--color-primary);
 }
+
+.tagify__tag {
+    --tag-pad: 0 !important;
+}

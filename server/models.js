@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const {mongo} = require("mongoose");
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -24,6 +25,11 @@ const userSchema = new mongoose.Schema({
     propic: {
         type: String,
         maxlength: 16777216,
+    },
+    channelsIds:{
+        type: [String],
+        required: true,
+        default: [],
     }
 });
 
@@ -34,6 +40,10 @@ const squealSchema = new mongoose.Schema({
     },
     text:{
         type: String,
+        default: "",
+    },
+    date:{
+        type: Date,
         default: "",
     }
 });
@@ -50,10 +60,28 @@ const inboxSchema = new mongoose.Schema({
     }
 });
 
+const channelSchema = new mongoose.Schema({
+    name:{
+        type:String,
+        required: true,
+    },
+    description:{
+        type:String,
+        required: true,
+    },
+    owners:{
+        type: [String],
+        required: true,
+        default: [],
+    },
+});
+
 const User = mongoose.model("User", userSchema);
 const Squeal = mongoose.model("Squeal", squealSchema);
 const Inbox = mongoose.model("Inbox", inboxSchema);
+const Channel = mongoose.model("Channel", channelSchema);
 
 exports.userModel = User;
 exports.squealModel = Squeal;
 exports.inboxModel = Inbox;
+exports.channelModel = Channel;

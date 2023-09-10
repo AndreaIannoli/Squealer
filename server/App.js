@@ -1,7 +1,7 @@
 const config = require('./Config');
 const express = require('express');
 const mongoose = require('mongoose');
-const { userModel, squealModel, inboxModel} = require("./models");
+const { userModel, squealModel, inboxModel, channelModel} = require("./models");
 const bodyParser = require("express");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
@@ -99,7 +99,6 @@ app.get("/existence_user", async (request, response) => {
 app.get("/propic_user", async (request, response) => {
     try {
         const user = await userModel.findOne({ username: request.query.username }, { propic: true, _id: false });
-        console.log(user);
         if(user) {
             response.send(user.propic);
         } else {
@@ -113,9 +112,36 @@ app.get("/propic_user", async (request, response) => {
 app.get("/search", async (request, response) => {
     try {
         const substringToSearch = request.query.value; // Replace with the substring you want to search for
-        const result = await userModel.find({ username: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, username: true });
-        const usernames = result.map(user => '@' + user.username);
+        const resultUsernames = await userModel.find({ username: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, username: true });
+        const usernames = resultUsernames.map(user => '@' + user.username);
+        const resultChannels = await channelModel.find({ name: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, name: true });
+        const channels = resultChannels.map(channel => '#' + channel.name);
+        let results = usernames.concat(channels);
+        response.send(results);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/search_user", async (request, response) => {
+    try {
+        const substringToSearch = request.query.value; // Replace with the substring you want to search for
+        const resultUsernames = await userModel.find({ username: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, username: true });
+        const usernames = resultUsernames.map(user => '@' + user.username);
         response.send(usernames);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/search_channel", async (request, response) => {
+    try {
+        const substringToSearch = request.query.value; // Replace with the substring you want to search for
+        const resultChannels = await channelModel.find({ name: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, name: true });
+        const channels = resultChannels.map(channel => '#' + channel.name);
+        response.send(channels);
     } catch (error) {
         console.log(error);
         response.status(500).send(error);
@@ -132,21 +158,70 @@ app.get("/users", async (request, response) => {
     }
 });
 
-app.get("/squeals", async (request, response) => {
+app.get("/channels_squeals", async (request, response) => {
     try {
-        const username = '@' + await authenticateUser(request);
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            })
+            return;
+        }
+
+        const user = await userModel.findOne({username: username}, {channelsIds: true, _id: false});
+        if(user) {
+            const channelsIds = user.channelsIds;
+            let squeals = [];
+            for(let channelId of channelsIds) {
+                const channel = await channelModel.findOne({_id: channelId}, {name: true, _id: false});
+                const inbox = await inboxModel.findOne({receiver: '#' + channel.name}, {squealsIds: true, _id: false});
+                if(inbox === null){
+                    continue;
+                }
+                const squealsIds = inbox.squealsIds;
+                for(let squealId of squealsIds) {
+                    let squeal = await squealModel.findOne({_id: squealId});
+                    squeal = {
+                        id: squeal._id.toHexString(),
+                        from: '#' + channel.name,
+                        sender: squeal.sender,
+                        text: squeal.text,
+                        date: squeal.date
+                    }
+                    squeals.push(squeal);
+                }
+            }
+            squeals.sort(compareSquealsDate);
+            response.send(squeals);
+        }
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/private_squeals", async (request, response) => {
+    try {
+        let username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            })
+            return;
+        }
+        username = '@' + username;
 
         const inbox = await inboxModel.findOne({receiver: username}, {squealsIds: true, _id: false});
-        console.log(inbox);
         if(inbox) {
             const squealsIds = inbox.squealsIds;
-            console.log(inbox);
             let squeals = [];
             for(let squealId of squealsIds) {
-                const squeal = await squealModel.findOne({_id: squealId}, {_id: false});
-                console.log(squeal);
+                const squeal = await squealModel.findOne({_id: squealId});
                 squeals.push(squeal);
             }
+            squeals.sort(compareSquealsDate);
             response.send(squeals);
         }
     } catch (error) {
@@ -159,15 +234,17 @@ app.post("/post_squeal", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
             response.json({
                 result: "authentication failed"
-            })
+            });
             return;
         }
         request.body['sender'] = username;
         const squeal = new squealModel({
             sender: request.body.sender,
-            text: request.body.text
+            text: request.body.text,
+            date: new Date()
         });
         const newSqueal = await squeal.save();
         const receiversArr = request.body.receivers;
@@ -190,6 +267,92 @@ app.post("/post_squeal", async (request, response) => {
         response.json({
             result: "successful"
         });
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/existence_channel", async (request, response) => {
+    try {
+        if(await channelModel.findOne({ name: request.query.name })) {
+            response.send('exist');
+        } else {
+            response.send('notExist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+app.post("/create_channel", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        if ((await channelModel.findOne({name: request.body.name}, {_id: true})) === null){
+            const channel = new channelModel({
+                name: request.body.name,
+                description: request.body.description,
+                owners: [username],
+            });
+            const newChannel = await channel.save();
+            await userModel.findOneAndUpdate(
+                {username: username},
+                {$push: {channelsIds: newChannel._id.toHexString()}},
+                {new: true},
+            );
+
+            response.json({
+                result: "successful"
+            });
+        } else {
+            console.log(await channelModel.findOne({name: request.body.name}, {_id: true}));
+            response.json({
+                result: "channel already exists"
+            });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.post("/subscribe_channel", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            })
+            return;
+        }
+
+        const channel = await channelModel.findOne({name: request.body.name}, {_id: true});
+        if (channel !== null){
+            await userModel.findOneAndUpdate(
+                {username: username}, // Query condition to find the document
+                {$push: {channelsIds: channel._id.toHexString()}}, // Update operation to push the new string
+                {new: true}, // Option to return the updated document
+            );
+
+            response.json({
+                result: "successful"
+            });
+        } else {
+            response.json({
+                result: "channel doesn't exist"
+            });
+            return;
+        }
     } catch (error) {
         console.log(error);
         response.status(500).send(error);
@@ -220,9 +383,27 @@ function decrypt(encryptedText) {
 }
 
 async function authenticateUser(request) {
+    if(!request.cookies.loggedStatus){
+        console.log('sloggato');
+        return false;
+    }
     const token = jwt.verify(request.cookies.jwt, secretKey);
     const user = await userModel.findOne({username: token.username}, {username: true, _id: true});
     if(user != null && user._id.toHexString() === token.id){
         return token.username;
+    } else {
+        return false;
+    }
+}
+
+function compareSquealsDate(a, b){
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    if(dateA - dateB > 0){
+        return -1;
+    } else if(dateA - dateB < 0) {
+        return 1;
+    } else {
+        return 0;
     }
 }

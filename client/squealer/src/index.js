@@ -25,8 +25,10 @@ import axios from 'axios';
 import Home from "./pages/Home";
 import Registration from "./pages/Registration";
 import Login from "./pages/Login";
+import Messages from "./pages/Messages";
+import Profile from "./pages/Profile";
 
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
     {
         path: "/",
         element: <Home />,
@@ -39,7 +41,15 @@ const router = createBrowserRouter([
         path: "/register",
         element: <Registration />,
     },
-]);
+    {
+        path: "/messages",
+        element: <Messages />,
+    },
+    {
+        path: "/profile",
+        element: <Profile />,
+    },
+], {basename: "/"});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
