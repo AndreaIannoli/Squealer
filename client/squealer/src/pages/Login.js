@@ -1,10 +1,34 @@
 import '../styles/Login.css';
 import squealerLogo from "../img/squealerLogo.svg";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import axios from "axios";
 import {getServerDomain} from "../services/Config";
 
 function Login() {
+    const navigate = useNavigate();
+    const onLoginSubmit = async (event) => {
+        event.preventDefault();
+        if(!(await checkExistence())){
+            return;
+        }
+        axios.post(`https://${getServerDomain()}/authenticate_user`, {
+            "username": document.getElementById("floatingUsername").value,
+            "password": document.getElementById("floatingPassword").value
+        }, { withCredentials: true }).then(response => {
+            console.log(response.data.result);
+            if (response.data.result === "successful") {
+                sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
+                sessionStorage.setItem('userPropic', response.data['userPropic']);
+                navigate("/");
+            } else {
+                document.getElementById('floatingPassword').classList.remove('is-valid');
+                document.getElementById('floatingPassword').classList.add('is-invalid');
+                document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password is wrong!';
+            }
+        }).catch(error => {
+            console.log(error.message);
+        });
+    }
     return(
         <div className='container-fluid'>
             <div className='position-fixed'><Link to='/'><button className='btn back-arrow-btn'><i className="bi bi-arrow-left-short back-arrow"></i></button></Link></div>
@@ -58,30 +82,6 @@ async function checkExistence() {
         }).catch(error => {
             console.log(error.message);
         });
-}
-
-const onLoginSubmit = async (event) => {
-    event.preventDefault();
-    if(!(await checkExistence())){
-        return;
-    }
-    axios.post(`https://${getServerDomain()}/authenticate_user`, {
-        "username": document.getElementById("floatingUsername").value,
-        "password": document.getElementById("floatingPassword").value
-    }, { withCredentials: true }).then(response => {
-        console.log(response.data.result);
-        if (response.data.result === "successful") {
-            sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
-            sessionStorage.setItem('userPropic', response.data['userPropic'])
-            window.location.href = "/";
-        } else {
-            document.getElementById('floatingPassword').classList.remove('is-valid');
-            document.getElementById('floatingPassword').classList.add('is-invalid');
-            document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password is wrong!';
-        }
-    }).catch(error => {
-        console.log(error.message);
-    });
 }
 
 export default Login;

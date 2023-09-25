@@ -33,6 +33,18 @@ const userSchema = new mongoose.Schema({
     }
 });
 
+const reactionSchema = new mongoose.Schema({
+    name:{
+        type: String,
+        required: true,
+    },
+    usersIds:{
+        type: [String],
+        required: true,
+        default: [],
+    }
+});
+
 const squealSchema = new mongoose.Schema({
     sender:{
         type:String,
@@ -42,8 +54,29 @@ const squealSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    geolocation:{
+        type: [String],
+        default: [],
+    },
+    img:{
+        type: String,
+        maxlength: 16777216,
+        default: "",
+    },
     date:{
         type: Date,
+        default: "",
+    },
+    resqueal:{
+        type: String,
+        default: ""
+    },
+    reactions:{
+        type: [reactionSchema],
+        default: [],
+    },
+    CM:{
+        type: String,
         default: "",
     }
 });
@@ -55,17 +88,16 @@ const inboxSchema = new mongoose.Schema({
     },
     squealsIds:{
         type: [String],
-        required: true,
         default: [],
-    }
+    },
+    notificationsIds:{
+        type: [String],
+        default: [],
+    },
 });
 
 const channelSchema = new mongoose.Schema({
     name:{
-        type:String,
-        required: true,
-    },
-    description:{
         type:String,
         required: true,
     },
@@ -74,14 +106,50 @@ const channelSchema = new mongoose.Schema({
         required: true,
         default: [],
     },
+    channelType:{
+        type: String,
+        required: true,
+        default: "user",
+    },
+    access:{
+        type: String,
+        required: true,
+        default: "public",
+    }
+});
+
+const notificationSchema = new mongoose.Schema({
+    title:{
+        type: String,
+        required: true,
+        default: 'Notification'
+    },
+    date:{
+        type: Date,
+        required: true,
+        default: new Date()
+    },
+    text:{
+        type: String,
+        required: true,
+        default: ''
+    },
+    sender:{
+        type: String,
+        required: true
+    }
 });
 
 const User = mongoose.model("User", userSchema);
 const Squeal = mongoose.model("Squeal", squealSchema);
 const Inbox = mongoose.model("Inbox", inboxSchema);
 const Channel = mongoose.model("Channel", channelSchema);
+const Notification = mongoose.model("Notification", notificationSchema);
+const Reaction = mongoose.model("Reaction", reactionSchema);
 
 exports.userModel = User;
 exports.squealModel = Squeal;
 exports.inboxModel = Inbox;
 exports.channelModel = Channel;
+exports.notificationModel = Notification;
+exports.reactionModel = Reaction;

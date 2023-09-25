@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@googlemaps/react-wrapper": "^1.1.35",
+    "@react-google-maps/api": "^2.19.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -14,6 +16,7 @@
     "Buffer": "^0.0.0",
     "crypto": "^1.0.1",
     "crypto-js": "^4.1.1",
+    "google-maps": "^4.3.3",
     "jquery": "^3.7.0",
     "mongodb": "^5.6.0",
     "popper.js": "^1.16.1",

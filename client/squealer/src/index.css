@@ -57,3 +57,15 @@ code {
 .back-arrow-btn:active {
   border-style: none;
 }
+
+.anchor{
+  display: block;
+  height: 115px; /*same height as header*/
+  margin-top: -115px; /*same height as header*/
+  visibility: hidden;
+}
+
+.modal-backdrop {
+  z-index: -1;
+  background-color: transparent;
+}

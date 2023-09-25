@@ -11,9 +11,9 @@
 }
 
 #propic {
-    aspect-ratio: 1;
+    aspect-ratio: initial;
     clip-path: circle();
-    object-fit: cover;
+    object-fit: contain;
 }
 
 textarea:hover,
@@ -36,8 +36,31 @@ label:focus,
 
 .postbox-btn {
     color: var(--color-primary);
+    border-width: 0;
 }
 
 .tagify__tag {
     --tag-pad: 0 !important;
+}
+
+#map {
+    width: 100%;
+    height: 300px;
+}
+
+.map-wrapper {
+    width: 100%;
+    height: 300px;
+}
+
+.map-container {
+    width: 100%;
+    height: 100%;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+}
+
+#squealBodyImg {
+    height: 100%;
+    width: 100%;
 }

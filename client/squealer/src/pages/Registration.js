@@ -1,11 +1,75 @@
 import '../styles/Registration.css';
 import squealerLogo from '../img/squealerLogo.svg';
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import axios from "axios";
-import defaultPropic from "../img/propic.jpg";
+import defaultPropic from "../img/default_propic.jpg";
 import {getServerDomain} from "../services/Config";
 
 function Registration() {
+    const navigate = useNavigate();
+    const onRegistrationSubmit = async (event) => {
+        event.preventDefault();
+        if (await checkUsername()) {
+            return;
+        }
+        if (document.getElementById('floatingPassword').value.length < 8) {
+            document.getElementById('floatingPassword').classList.remove('is-valid');
+            document.getElementById('floatingPassword').classList.add('is-invalid');
+            document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password must be at least 8 character long!';
+            return;
+        } else {
+            document.getElementById('floatingPassword').classList.remove('is-invalid');
+            document.getElementById('floatingPassword').classList.add('is-valid');
+            document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password is valid!';
+        }
+        if (document.getElementById('floatingConfirmPassword').value !== document.getElementById('floatingPassword').value) {
+            document.getElementById('floatingConfirmPassword').classList.remove('is-valid');
+            document.getElementById('floatingConfirmPassword').classList.add('is-invalid');
+            document.getElementById('floatingConfirmPassword').nextElementSibling.innerHTML = 'Password does not match!';
+            return;
+        } else {
+            document.getElementById('floatingConfirmPassword').classList.remove('is-invalid');
+            document.getElementById('floatingConfirmPassword').classList.add('is-valid');
+            document.getElementById('floatingConfirmPassword').nextElementSibling.innerHTML = 'Password does match!';
+        }
+        const selectedImage = document.getElementById('propicUpload').files[0];
+        if (selectedImage) {
+            const reader = new FileReader();
+            reader.readAsDataURL(selectedImage);
+            reader.onload = async function (event) {
+                const encode_img = event.target.result;
+                axios.post(`https://${getServerDomain()}/register_user`, {
+                    "name": document.getElementById('floatingName').value,
+                    "surname": document.getElementById('floatingSurname').value,
+                    "email": document.getElementById('floatingEmail').value,
+                    "username": document.getElementById('floatingUsername').value,
+                    "password": document.getElementById('floatingPassword').value,
+                    "propic": encode_img,
+                }, { withCredentials: true }).then((res) => {
+                    sessionStorage.setItem('userPropic', encode_img);
+                    sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
+                    navigate("/");
+                }).catch(error => {
+                    console.log(error.message);
+                });
+            };
+            event.preventDefault();
+        } else {
+            axios.post(`https://${getServerDomain()}/register_user`, {
+                "name": document.getElementById('floatingName').value,
+                "surname": document.getElementById('floatingSurname').value,
+                "email": document.getElementById('floatingEmail').value,
+                "username": document.getElementById('floatingUsername').value,
+                "password": document.getElementById('floatingPassword').value,
+            }, { withCredentials: true }).then((res) => {
+                sessionStorage.setItem('userPropic', defaultPropic);
+                sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
+                navigate("/");
+            }).catch(error => {
+                console.log(error.message);
+            });
+        }
+    }
     return(
         <div className='container-fluid'>
             <div className='position-fixed'><Link to='/'><button className='btn back-arrow-btn'><i className="bi bi-arrow-left-short back-arrow"></i></button></Link></div>
@@ -89,68 +153,6 @@ async function checkUsername() {
             console.log(error.message);
             return true;
         });
-}
-
-const onRegistrationSubmit = async (event) => {
-    event.preventDefault();
-    if (await checkUsername()) {
-        return;
-    }
-    if (document.getElementById('floatingPassword').value.length < 8) {
-        document.getElementById('floatingPassword').classList.remove('is-valid');
-        document.getElementById('floatingPassword').classList.add('is-invalid');
-        document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password must be at least 8 character long!';
-        return;
-    } else {
-        document.getElementById('floatingPassword').classList.remove('is-invalid');
-        document.getElementById('floatingPassword').classList.add('is-valid');
-        document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password is valid!';
-    }
-    if (document.getElementById('floatingConfirmPassword').value !== document.getElementById('floatingPassword').value) {
-        document.getElementById('floatingConfirmPassword').classList.remove('is-valid');
-        document.getElementById('floatingConfirmPassword').classList.add('is-invalid');
-        document.getElementById('floatingConfirmPassword').nextElementSibling.innerHTML = 'Password does not match!';
-        return;
-    } else {
-        document.getElementById('floatingConfirmPassword').classList.remove('is-invalid');
-        document.getElementById('floatingConfirmPassword').classList.add('is-valid');
-        document.getElementById('floatingConfirmPassword').nextElementSibling.innerHTML = 'Password does match!';
-    }
-    const selectedImage = document.getElementById('propicUpload').files[0];
-    if (selectedImage) {
-        const reader = new FileReader();
-        reader.readAsDataURL(selectedImage);
-        reader.onload = async function (event) {
-            const encode_img = event.target.result;
-            axios.post(`https://${getServerDomain()}/register_user`, {
-                "name": document.getElementById('floatingName').value,
-                "surname": document.getElementById('floatingSurname').value,
-                "email": document.getElementById('floatingEmail').value,
-                "username": document.getElementById('floatingUsername').value,
-                "password": document.getElementById('floatingPassword').value,
-                "propic": encode_img,
-            }, { withCredentials: true }).catch(error => {
-                console.log(error.message);
-            });
-            sessionStorage.setItem('userPropic', encode_img);
-            sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
-            window.location.href = "/";
-        };
-        event.preventDefault();
-    } else {
-        axios.post(`https://${getServerDomain()}/register_user`, {
-            "name": document.getElementById('floatingName').value,
-            "surname": document.getElementById('floatingSurname').value,
-            "email": document.getElementById('floatingEmail').value,
-            "username": document.getElementById('floatingUsername').value,
-            "password": document.getElementById('floatingPassword').value,
-        }, { withCredentials: true }).catch(error => {
-            console.log(error.message);
-        });
-        sessionStorage.setItem('userPropic', defaultPropic);
-        sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
-        window.location.href = "/";
-    }
 }
 
 function imageCheck() {

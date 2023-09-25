@@ -1,3 +1,16 @@
 #propicProfileV {
-    margin-bottom: -50%;
+
+}
+
+#propicContainerProfileV {
+}
+
+#scrollpaneProfileV {
+    height: 100vh;
+    overflow-y: scroll;
+    overflow-wrap: anywhere;
+}
+
+#propicBGProfileV {
+    height: border-box;
 }

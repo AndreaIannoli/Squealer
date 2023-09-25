@@ -4,4 +4,5 @@
 # Editor-based HTTP Client requests
 /httpRequests/
 /client/squealer/node_modules/
+/client/node_modules/
 /server/node_modules/

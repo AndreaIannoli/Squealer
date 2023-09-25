@@ -1,0 +1,15 @@
+#textContainer {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-all;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+}
+
+.reactionIcon:hover {
+    cursor: pointer;
+    color: #1DA0F2;
+    transition: all 0.5s;
+}
