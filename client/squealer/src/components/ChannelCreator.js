@@ -56,10 +56,11 @@ function ChannelCreator() {
                 "name": channelName,
                 "owners": owners ? JSON.parse(owners).map(user => user.value.slice(1)) : [],
                 "access": document.getElementById('accessSwitch').checked ? 'private':'public',
-            },{withCredentials: true}).catch(error => {
+            },{withCredentials: true}).then((res) => {
+                navigate('/channels/' + channelName);
+            }).catch(error => {
                 console.log(error.message);
             });
-            navigate('/channels/' + channelName);
         } catch (error) {
             console.error(error);
         }

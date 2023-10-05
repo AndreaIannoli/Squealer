@@ -1,20 +1,26 @@
 import '../styles/Navbar.css';
 import squealerLogo from '../img/squealerLogo.svg'
-import propic from "../img/propic.jpg";
 import AuthenticationBox from "./AuthenticationBox";
 import {loadSqueals} from "./ScrollPane";
 import {Link, useNavigate} from 'react-router-dom';
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
+import {getUserPropic} from "../services/AccountManager";
+import Spinner from "./Spinner";
 
 function Navbar() {
     const logged = document.cookie.includes('loggedStatus');
     const navigate = useNavigate();
+    const [propic, setPropic] = useState();
 
     const goToMyProfile = () => {
         navigate('/profiles/' + sessionStorage.getItem('username'));
     };
     useEffect(() => {
         highlightMenu()
+        async function retrievePropic() {
+            setPropic(await checkPropic());
+        }
+        retrievePropic();
     }, []);
     return (
         <div className='container-fluid pe-none' id='navbar-container'>
@@ -43,7 +49,7 @@ function Navbar() {
                     </div>
                 :
                     <div type="button" className='col-12 d-flex align-items-center mt-1 mb-md-3 pe-auto' data-bs-toggle="dropdown" aria-expanded="false" id='navbar-propic-container'>
-                        <img src={sessionStorage.getItem('userPropic')} className='w-25' id='navbar-propic'/>
+                        <img src={propic ? propic : <Spinner />} className='w-25' id='navbar-propic'/>
                         <div className='fs-6 fw-semibold d-none d-md-block ms-1'>{ '@' + sessionStorage.getItem('username') }</div>
                         <ul className="dropdown-menu">
                             <li><button className='dropdown-item' onClick={ goToMyProfile }>My profile</button></li>
@@ -80,6 +86,14 @@ function highlightMenu() {
     }
 
 
+}
+export async function checkPropic() {
+    if(sessionStorage.getItem('userPropic') === undefined || !sessionStorage.getItem('userPropic')) {
+        return sessionStorage.getItem('userPropic');
+    } else {
+        console.log("setted here");
+        return await getUserPropic(sessionStorage.getItem("username"));
+    }
 }
 
 export default Navbar;

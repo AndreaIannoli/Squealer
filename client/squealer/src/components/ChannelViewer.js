@@ -1,7 +1,6 @@
 import '../styles/ProfileViewer.css';
 import {getUserPropic} from "../services/AccountManager";
 import {useEffect, useState} from "react";
-import standardProPic from '../img/propic-stadard.svg';
 import axios from "axios";
 import {getServerDomain} from "../services/Config";
 import Squeal from "./Squeal";
@@ -46,7 +45,7 @@ function ProfileViewer() {
             console.error(e);
         }
     }
-    getChannel()
+    getChannel();
 
     async function isOwner(){
         const channel = await getChannel();
@@ -71,7 +70,9 @@ function ProfileViewer() {
     async function subscribe() {
         await axios.post(`https://${getServerDomain()}/channels/subscribe`, {
             name: name
-        }, {withCredentials: true}).catch((e) => {
+        }, {withCredentials: true}).then((res) => {
+            setSubscribed(true);
+        }).catch((e) => {
             console.log(e);
         })
     }
@@ -79,10 +80,13 @@ function ProfileViewer() {
     async function unsubscribe() {
         await axios.post(`https://${getServerDomain()}/channels/unsubscribe`, {
             name: name
-        }, {withCredentials: true}).catch((e) => {
+        }, {withCredentials: true}).then((res) => {
+            setSubscribed(false);
+        }).catch((e) => {
             console.log(e);
         })
     }
+
     return(
         <div className='container-fluid p-0 bg-dark'>
             <div className='row d-flex justify-content-center p-0 h-100'>
@@ -120,6 +124,7 @@ async function loadChannelSqueals(name) {
 
         for (let entry of response.data) {
             const propic = await getUserPropic(entry.sender);
+            console.log(entry.id);
 
             SquealsComponents.push(
                 <Squeal

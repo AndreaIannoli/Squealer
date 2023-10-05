@@ -46,7 +46,7 @@ function ScrollPane() {
                     <div className="anchor" id="postBox"/>
                     <div className='row p-0' id='scrollpane'>
                         <div className='col-12 p-0'>
-                            { logged ? <PostBox/> : null}
+                            { logged ? <PostBox update={forceUpdate}/> : null}
                         </div>
                         {checkIfExplore()}
                         <div className='col-12 p-0'>

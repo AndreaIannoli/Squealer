@@ -235,6 +235,7 @@ app.get("/channels_squeals", async (request, response) => {
                 const squealsIds = inbox.squealsIds;
                 for(let squealId of squealsIds) {
                     let squeal = await squealModel.findOne({_id: squealId});
+
                     squeal = {
                         id: squeal._id.toHexString(),
                         from: '§' + channel.name,
@@ -367,7 +368,16 @@ app.get("/channel_squeals", async (request, response) => {
         let squeals = [];
         const inbox = await inboxModel.findOne({receiver: '§' + channelQueried}, {squealsIds: true, _id: false});
         for(let squealId of inbox.squealsIds) {
-            const squeal = await squealModel.findOne({_id: squealId});
+            let squeal = await squealModel.findOne({_id: squealId});
+            squeal = {
+                id: squeal._id.toHexString(),
+                sender: squeal.sender,
+                geolocation: squeal.geolocation,
+                img: squeal.img,
+                text: squeal.text,
+                date: squeal.date,
+                resqueal: squeal.resqueal
+            }
             squeals.push(squeal);
         }
         squeals.sort(compareSquealsDate);
@@ -727,8 +737,6 @@ app.get("/channels/userChannels/:channelName", async (request, response) => {
             return;
         }
 
-        console.log('channel requested', request.params.channelName);
-
         const userChannels = await userModel.findOne( {username: username}, {channelsIds: true} )
         const channel = await channelModel.findOne({ name: request.params.channelName, channelType: "user" });
         console.log(await channelModel.findOne({ name: request.params.channelName}));
@@ -878,12 +886,13 @@ app.get("/channels/:channelName", async (request, response) => {
         const channelName = request.params.channelName;
         const usernameQueried = request.query.username;
 
-        const channel = await channelModel({name: channelName}, {_id: true});
-        const user = await userModel({username: usernameQueried});
+        const channel = await channelModel.findOne({name: channelName}, {_id: true});
+        const user = await userModel.findOne({username: usernameQueried});
         if(!user) {
             response.status(404).send("User not found");
             return;
         }
+
         if(user.channelsIds.includes(channel._id.toHexString())){
             response.send("Subscribed");
         } else {

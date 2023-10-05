@@ -1,7 +1,6 @@
 import '../styles/ProfileViewer.css';
 import {getUserPropic} from "../services/AccountManager";
 import {useEffect, useState} from "react";
-import standardProPic from '../img/propic-stadard.svg';
 import axios from "axios";
 import {getServerDomain} from "../services/Config";
 import Squeal from "./Squeal";

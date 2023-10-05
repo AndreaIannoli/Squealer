@@ -6,8 +6,11 @@ import {getServerDomain} from "../services/Config";
 import MapContainer from "./MapContainer";
 import {createRoot} from "react-dom/client";
 import {useState} from "react";
+import Spinner from "./Spinner";
+import {checkPropic} from "./Navbar";
 
-function PostBox() {
+function PostBox({update}) {
+    const [propic, setPropic] = useState();
     useEffect(() => {
         const textarea = document.getElementById('squealTextarea');
         textarea.addEventListener('input', resizeTextarea);
@@ -97,6 +100,11 @@ function PostBox() {
             console.log( tagifyText.value )
             console.log('mix-mode "input" event value: ', e.detail)
         })
+
+        async function retrievePropic() {
+            setPropic(await checkPropic());
+        }
+        retrievePropic();
     })
     const [marker, setMarker] = useState([]);
     function onMapClick(e) {
@@ -119,11 +127,61 @@ function PostBox() {
         }
     }
 
+    function postSqueal(postType, squealBody) {
+        const receivers = document.getElementById('receivers').value;
+
+        if(postType === "img") {
+            axios.post(`https://${getServerDomain()}/post_squeal`, {
+                img: squealBody,
+                receivers: JSON.parse(receivers).map(user => user.value)
+            }, {withCredentials: true})
+                .then(function (response) {
+                    console.log(response);
+                    update(currentKey => currentKey+1);
+                    document.getElementById("squealTextarea").value = "";
+                    document.getElementById("receivers").value = "";
+                    cancelImgBody();
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        } else if(postType === "geo") {
+            axios.post(`https://${getServerDomain()}/post_squeal`, {
+                geolocation: [squealBody.lat.toString(), squealBody.lng.toString()],
+                receivers: JSON.parse(receivers).map(user => user.value)
+            }, {withCredentials: true})
+                .then(function (response) {
+                    console.log(response);
+                    update(currentKey => currentKey+1);
+                    document.getElementById("squealTextarea").value = "";
+                    document.getElementById("receivers").value = "";
+                    cancelMapBody();
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        } else {
+            axios.post(`https://${getServerDomain()}/post_squeal`, {
+                text: squealBody,
+                receivers: JSON.parse(receivers).map(user => user.value)
+            }, {withCredentials: true})
+                .then(function (response) {
+                    console.log(response);
+                    update(currentKey => currentKey+1);
+                    document.getElementById("squealTextarea").value = "";
+                    document.getElementById("receivers").value = "";
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+    }
+
     return(
         <div className='container-fluid pt-4 pt-md-0 mt-5 mt-md-0'>
             <div className='row rounded-4 bg-white p-0 ms-3 me-3'>
                 <div className='col-2 col-md-2 col-lg-2 p-3 d-none d-md-flex'>
-                    <img src={ sessionStorage.getItem('userPropic') } className='w-100' id='propic'/>
+                    <img src={ propic ? propic : <Spinner /> } className='w-100' id='propic'/>
                 </div>
                 <div className='col-12 col-md-9 col-lg-10 mb-3 mb-lg-1'>
                     <div className="input-group mb-0 mt-3">
@@ -194,46 +252,6 @@ export function resizeTextarea() {
     const textarea = document.getElementById('squealTextarea');
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
-}
-
-function postSqueal(postType, squealBody) {
-    const receivers = document.getElementById('receivers').value;
-    console.log(postType);
-
-    if(postType === "img") {
-        axios.post(`https://${getServerDomain()}/post_squeal`, {
-            img: squealBody,
-            receivers: JSON.parse(receivers).map(user => user.value)
-        }, {withCredentials: true})
-            .then(function (response) {
-                console.log(response);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-    } else if(postType === "geo") {
-        axios.post(`https://${getServerDomain()}/post_squeal`, {
-            geolocation: [squealBody.lat.toString(), squealBody.lng.toString()],
-            receivers: JSON.parse(receivers).map(user => user.value)
-        }, {withCredentials: true})
-            .then(function (response) {
-                console.log(response);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-    } else {
-        axios.post(`https://${getServerDomain()}/post_squeal`, {
-            text: squealBody,
-            receivers: JSON.parse(receivers).map(user => user.value)
-        }, {withCredentials: true})
-            .then(function (response) {
-                console.log(response);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-    }
 }
 
 function pickImage(setPostType) {
