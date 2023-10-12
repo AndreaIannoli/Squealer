@@ -500,92 +500,113 @@ app.post("/post_squeal", async (request, response) => {
             return;
         }
         request.body['sender'] = username;
-        const reactionAngry = new reactionModel({
-            name: "angry",
-            //usersIds: ["aCaso"],
-        })
-        await reactionAngry.save();
-        const reactionDislike = new reactionModel({
-            name: "dislike",
-        })
-        await reactionDislike.save();
-        const reactionNormal = new reactionModel({
-            name: "normal",
-        })
-        await reactionNormal.save();
-        const reactionLike = new reactionModel({
-            name: "like",
-        })
-        await reactionLike.save();
-        const reactionHeart = new reactionModel({
-            name: "heart",
-        })
-        await reactionHeart.save();
-        const squeal = new squealModel({
-            sender: request.body.sender,
-            text: request.body.text,
-            geolocation: request.body.geolocation,
-            img: request.body.img,
-            date: new Date(),
-            reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
-        });
-        const newSqueal = await squeal.save();
-        const receiversArr = request.body.receivers;
-        for(let receiverUsername of receiversArr){
-            if (await inboxModel.findOne({ receiver: receiverUsername })) {
-                if(receiverUsername.charAt(0) === '§') {
+        let flag = true;
 
-                    //aggiorna caratteri giornaalieri---------
-
-                    const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
-                    let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
-                    arrayCaratteri.characters[0].number = String(aggiunta);
-                    await userModel.findOneAndUpdate({username: request.body.sender}, {$set: {characters: arrayCaratteri.characters}});
-
-                    await inboxModel.findOneAndUpdate(
-                        {receiver: receiverUsername}, // Query condition to find the document
-                        {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
-                        {new: true}, // Option to return the updated document
-                    );
-                    const notification = new notificationModel({
-                        title: "New Squeal from " + request.body.sender,
-                        text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*} in {*tag*{" + receiverUsername + "}*tag*}",
-                        sender: request.body.sender,
-                        date: new Date(),
-                    });
-                    await notification.save();
-                    const channel = await channelModel.findOne({name: receiverUsername.slice(1)}, {_id: true})
-                    const channelUsers = await userModel.find({channelsIds: {$in: [channel._id.toHexString()]}})
-                    for(let user of channelUsers) {
-                        await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
-                    }
-                } else {
-                    const notification = new notificationModel({
-                        title: "New Squeal from " + request.body.sender,
-                        text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*}",
-                        sender: request.body.sender,
-                        date: new Date(),
-                    });
-                    await notification.save();
-                    await inboxModel.findOneAndUpdate(
-                        {receiver: receiverUsername}, // Query condition to find the document
-                        {$push: {squealsIds: newSqueal._id.toHexString(), notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
-                        {new: true}, // Option to return the updated document
-                    );
-                }
-            } else { // to remove maybe
-                const inbox = new inboxModel({
-                    receiver: receiverUsername,
-                    squealsIds: [newSqueal._id.toHexString()],
-                    notificationsIds: [notification._id.toHexString()]
-                })
-                await inbox.save();
+        const receiversArr0 = request.body.receivers;
+        let differenza = 0;
+        for(let receiverUsername of receiversArr0){
+            if(receiverUsername.charAt(0) === '§') {
+                const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
+                differenza = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+            }
+            if(differenza < 0){
+                console.log("superato numero di caratteri");
+                flag = false;
             }
         }
 
-        response.json({
-            result: "successful"
-        });
+        if(!flag) {
+            console.log("superato limite di craatteri");
+        }else{
+
+            const reactionAngry = new reactionModel({
+                name: "angry",
+                //usersIds: ["aCaso"],
+            })
+            await reactionAngry.save();
+            const reactionDislike = new reactionModel({
+                name: "dislike",
+            })
+            await reactionDislike.save();
+            const reactionNormal = new reactionModel({
+                name: "normal",
+            })
+            await reactionNormal.save();
+            const reactionLike = new reactionModel({
+                name: "like",
+            })
+            await reactionLike.save();
+            const reactionHeart = new reactionModel({
+                name: "heart",
+            })
+            await reactionHeart.save();
+            const squeal = new squealModel({
+                sender: request.body.sender,
+                text: request.body.text,
+                geolocation: request.body.geolocation,
+                img: request.body.img,
+                date: new Date(),
+                reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
+            });
+
+
+
+            const newSqueal = await squeal.save();
+            const receiversArr = request.body.receivers;
+            for(let receiverUsername of receiversArr){
+                if (await inboxModel.findOne({ receiver: receiverUsername })) {
+                    if(receiverUsername.charAt(0) === '§') {
+                        //aggiorna caratteri giornaalieri---------
+                        const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
+                        let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+                        arrayCaratteri.characters[0].number = String(aggiunta);
+                        await userModel.findOneAndUpdate({username: request.body.sender}, {$set: {characters: arrayCaratteri.characters}});
+
+                        await inboxModel.findOneAndUpdate(
+                            {receiver: receiverUsername}, // Query condition to find the document
+                            {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
+                            {new: true}, // Option to return the updated document
+                        );
+                        const notification = new notificationModel({
+                            title: "New Squeal from " + request.body.sender,
+                            text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*} in {*tag*{" + receiverUsername + "}*tag*}",
+                            sender: request.body.sender,
+                            date: new Date(),
+                        });
+                        await notification.save();
+                        const channel = await channelModel.findOne({name: receiverUsername.slice(1)}, {_id: true})
+                        const channelUsers = await userModel.find({channelsIds: {$in: [channel._id.toHexString()]}})
+                        for(let user of channelUsers) {
+                            await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
+                        }
+                    } else {
+                        const notification = new notificationModel({
+                            title: "New Squeal from " + request.body.sender,
+                            text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*}",
+                            sender: request.body.sender,
+                            date: new Date(),
+                        });
+                        await notification.save();
+                        await inboxModel.findOneAndUpdate(
+                            {receiver: receiverUsername}, // Query condition to find the document
+                            {$push: {squealsIds: newSqueal._id.toHexString(), notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                            {new: true}, // Option to return the updated document
+                        );
+                    }
+                } else { // to remove maybe
+                    const inbox = new inboxModel({
+                        receiver: receiverUsername,
+                        squealsIds: [newSqueal._id.toHexString()],
+                        notificationsIds: [notification._id.toHexString()]
+                    })
+                    await inbox.save();
+                }
+            }
+
+            response.json({
+                result: "successful"
+            });
+        }
     } catch (error) {
         console.log(error);
         response.status(500).send(error);

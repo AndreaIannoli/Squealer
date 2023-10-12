@@ -123,14 +123,7 @@ function PostBox({update}) {
 
                 console.log("destinatario::: " + document.getElementById("receivers"));
 
-                if(document.getElementById("CharactersCount").innerHTML < 0){
-                    document.getElementById("buttonSqueal").disabled = true;
-                }else{
-                    document.getElementById("buttonSqueal").disabled = false;
-                }
-
             }else{
-                document.getElementById("buttonSqueal").disabled = false;
 
                 document.getElementById("CharactersCount").innerText = "";
             }
