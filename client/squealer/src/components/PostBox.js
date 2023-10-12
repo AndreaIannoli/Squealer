@@ -91,6 +91,7 @@ function PostBox({update}) {
                         .then(function(newWhitelist){
                             tagifyText.whitelist = newWhitelist // update whitelist Array in-place
                             tagifyText.loading(false).dropdown.show(value) // render the suggestions dropdown
+                            console.log("selezionato");
                         })
 
                 if( e.detail.value.length > 1 )
@@ -99,6 +100,40 @@ function PostBox({update}) {
 
             console.log( tagifyText.value )
             console.log('mix-mode "input" event value: ', e.detail)
+
+            let caratteri = "";
+            let destinatario = document.getElementById("receivers").value;
+
+
+            if(destinatario.includes("§")){
+
+                console.log("username::   " + sessionStorage.getItem("username"));
+
+                axios.get(`https://${getServerDomain()}/caratteriGiornalieri?username=${sessionStorage.getItem("username")}`)
+                    .then(response => {
+                        // Gestisci la risposta
+                        caratteri = response.data;
+                        document.getElementById("CharactersCount").innerText = caratteri - e.detail.textContent.length;
+
+                    })
+                    .catch(error => {
+                        // Gestisci gli errori
+                        console.error('Errore durante la richiesta:', error);
+                    });
+
+                console.log("destinatario::: " + document.getElementById("receivers"));
+
+                if(document.getElementById("CharactersCount").innerHTML < 0){
+                    document.getElementById("buttonSqueal").disabled = true;
+                }else{
+                    document.getElementById("buttonSqueal").disabled = false;
+                }
+
+            }else{
+                document.getElementById("buttonSqueal").disabled = false;
+
+                document.getElementById("CharactersCount").innerText = "";
+            }
         })
 
         async function retrievePropic() {
@@ -124,7 +159,16 @@ function PostBox({update}) {
             return document.getElementById('squealBodyImg').src;
         } else {
             return document.getElementById("squealTextarea").value;
+            console.log("contenuto squeal:  " + document.getElementById("squealTextarea").value);
         }
+    }
+
+
+    function counter(){
+        var myText = document.getElementById("squealTextarea");
+        var count = document.getElementById("CharactersCount");
+        var characters = myText.value.split('');
+        count.innerText = characters.length;
     }
 
     function postSqueal(postType, squealBody) {
@@ -194,7 +238,8 @@ function PostBox({update}) {
                     <div className='d-flex'>
                         <button className='btn postbox-btn' data-bs-toggle="modal" data-bs-target="#imgModal"><i className="bi bi-images"></i></button>
                         <button className='btn postbox-btn' data-bs-toggle="modal" data-bs-target="#mapModal"><i className="bi bi-geo-alt"></i></button>
-                        <button className='btn btn-primary rounded-5 ms-auto' onClick={() => {postSqueal(postType,  getSquealBody())}}>Squeal<i className="bi bi-send-fill ms-2"></i></button>
+                        <span id={"CharactersCount"}></span>
+                        <button className='btn btn-primary rounded-5 ms-auto' id={"buttonSqueal"} onClick={() => {postSqueal(postType,  getSquealBody())}}>Squeal<i className="bi bi-send-fill ms-2"></i></button>
                     </div>
                     <div className="modal fade" id="mapModal" tabIndex="-1" aria-labelledby="exampleModalLabel"
                          aria-hidden="true" data-backdrop="false">

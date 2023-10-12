@@ -1,9 +1,10 @@
 const config = require('./Config');
 const express = require('express');
 const mongoose = require('mongoose');
-const { userModel, squealModel, inboxModel, channelModel, notificationModel, reactionModel} = require("./models");
+const { userModel, squealModel, inboxModel, channelModel, notificationModel, reactionModel, charactersSchema} = require("./models");
 const bodyParser = require("express");
 const jwt = require("jsonwebtoken");
+const cronJob = require("node-cron");
 const fs = require("fs");
 const app = express ();
 app.use(bodyParser.json({limit: '50mb'}));
@@ -21,7 +22,67 @@ const secretKey = config.getKey();
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-mongoose.connect('mongodb://localhost:27017/Squealer');
+mongoose.connect('mongodb://127.0.0.1:27017/Squealer');
+
+cronJob.schedule('0 0 * * *', async () => {
+    //aggiorno caratteri giornalieri e tolgo la differenza ai cartetri settimanali
+
+    let user = await userModel.find();
+    for(let i = 0; i < user.length; i++){
+        let char = user[i].characters;
+        if(parseInt(char[0].number) < 100){
+            let diff = 100 - parseInt(char[0].number);
+
+            if(parseInt(char[0].number) > diff){
+                char[0].number = String(parseInt(char[0].number) + diff);
+                char[1].number = String(parseInt(char[1].number) - diff);
+            }else{
+                char[0].number = String(parseInt(char[0].number) + parseInt(char[1].number));
+                char[1].number = "0";
+            }
+            await userModel.findOneAndUpdate({username: user[i].username}, {characters: char});
+        }
+    }
+});
+
+cronJob.schedule('0 0 * * 0', async () => {
+    console.log("settimana");
+    //aggiorno caratteri settimanali e tolgo la differenza ai caratteri mensili
+
+    let user = await userModel.find();
+    for(let i = 0; i < user.length; i++){
+        let char = user[i].characters;
+        if(parseInt(char[1].number) < 700){
+            let diff = 700 - parseInt(char[1].number);
+
+            if(parseInt(char[2].number) > diff){
+                char[1].number = String(parseInt(char[1].number) + diff);
+                char[2].number = String(parseInt(char[2].number) - diff);
+            }else{
+                char[1].number = String(parseInt(char[1].number) + parseInt(char[1].number));
+                char[2].number = "0";
+            }
+            await userModel.findOneAndUpdate({username: user[i].username}, {characters: char});
+        }
+    }
+});
+
+
+
+cronJob.schedule('0 0 1 * *', async () => {
+    console.log("mensilmente");
+    //aggiorno caratteri mensili
+
+    let user = await userModel.find();
+    for(let i = 0; i < user.length; i++){
+        let char = user[i].characters;
+        if(parseInt(char[2].number) < 2800){
+            char[2].number = "2800";
+            await userModel.findOneAndUpdate({username: user[i].username}, {characters: char});
+        }
+    }
+});
+
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "https://localhost:3000");
@@ -49,7 +110,47 @@ app.get('/status', (request, response) => {
 app.post("/register_user", async (request, response) => {
     try {
         request.body["password"] = encrypt(request.body["password"]);
-        const user = new userModel(request.body);
+        console.log("sono dentro");
+
+        const giornalieri = new charactersSchema({
+            name: "giornalieri",
+            number: "100",
+        })
+        console.log("prima del save");
+
+        await giornalieri.save();
+        console.log("1");
+
+        const settimanali = new charactersSchema({
+            name: "settimanali",
+            number: "700",
+        })
+        await settimanali.save();
+        console.log("2");
+
+        const mensili = new charactersSchema({
+            name: "mensili",
+            number: "2800",
+        })
+        await mensili.save();
+        console.log("3");
+
+        let caratteri = [giornalieri, settimanali, mensili];
+
+        console.log("array caratteri::: " + caratteri);
+
+        const user = new userModel({
+            name: request.body.name,
+            surname: request.body.surname,
+            email: request.body.email,
+            username: request.body.username,
+            password: request.body.password,
+            characters: caratteri,
+        });
+
+        console.log("user::: " + user);
+
+
         await user.save();
         const inbox = new inboxModel({
             "receiver": '@' + request.body['username'],
@@ -433,6 +534,14 @@ app.post("/post_squeal", async (request, response) => {
         for(let receiverUsername of receiversArr){
             if (await inboxModel.findOne({ receiver: receiverUsername })) {
                 if(receiverUsername.charAt(0) === '§') {
+
+                    //aggiorna caratteri giornaalieri---------
+
+                    const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
+                    let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+                    arrayCaratteri.characters[0].number = String(aggiunta);
+                    await userModel.findOneAndUpdate({username: request.body.sender}, {$set: {characters: arrayCaratteri.characters}});
+
                     await inboxModel.findOneAndUpdate(
                         {receiver: receiverUsername}, // Query condition to find the document
                         {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
@@ -691,11 +800,54 @@ app.put("/add_reaction", async (request, response) => {
         negative = array.reactions[1].usersIds.length + (array.reactions[0].usersIds.length * 2);
         console.log("negative " + negative);
 
+
+        const arrayCaratteri = await userModel.findOne({username: request.body.username},{characters: true});
+
+        console.log("charactersVariabile: " + arrayCaratteri);
+        console.log("characters 0: " + arrayCaratteri.characters[0].number);
+
         if(total*0.25 < positive && total*0.25 > negative){
-            await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "popolare"}},{new : true});
+
+            if(await squealModel.findOne({_id:squealId, CM: "popolare"})){
+                console.log("è gia popolare");
+            }else{
+                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "popolare"}},{new : true});
+
+                let usernamePopolare = await squealModel.findOne({_id:squealId, CM: "popolare"}, {sender: true});
+                console.log("username popolare::   " + usernamePopolare.get("sender"));
+
+                let squealPopolari = await squealModel.find({sender: usernamePopolare.get("sender"), CM: "popolare"});
+                console.log("squeal popolari:: " + squealPopolari.length);
+
+                if(squealPopolari.length % 3 == 0){
+                    let aggiunta = Math.trunc(2 * (parseInt(arrayCaratteri.characters[0].number)/100));
+                    let totale = parseInt(arrayCaratteri.characters[0].number) + aggiunta;
+                    arrayCaratteri.characters[0].number = String(totale);
+                    await userModel.findOneAndUpdate({username: request.body.username}, {$set: {characters: arrayCaratteri.characters}});
+                }
+            }
 
         }else if(total*0.25 > positive && total*0.25 < negative){
-            await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "impopolare"}},{new : true});
+
+            if(await squealModel.findOne({_id:squealId, CM: "impopolare"})){
+                console.log("è gia impopolare");
+            }else{
+                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "impopolare"}},{new : true});
+
+                let usernameImpopolare = await squealModel.findOne({_id:squealId, CM: "impopolare"}, {sender: true});
+                console.log("username impopolare::   " + usernameImpopolare.get("sender"));
+
+                let squealImpopolari = await squealModel.find({sender: usernameImpopolare.get("sender"), CM: "impopolare"});
+                console.log("squeal impopolare:: " + squealImpopolari.length);
+
+                if(squealImpopolari.length % 3 == 0){
+                    let aggiunta = Math.trunc(2 * (parseInt(arrayCaratteri.characters[0].number)/100));
+
+                    let diminuzione = parseInt(arrayCaratteri.characters[0].number) - aggiunta;
+                    arrayCaratteri.characters[0].number = String(diminuzione);
+                    await userModel.findOneAndUpdate({username: request.body.username}, {$set: {characters: arrayCaratteri.characters}});
+                }
+            }
 
         }else if(total*0.25 < positive && total*0.25 > negative){
             await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "polarizzante"}},{new : true});
@@ -710,6 +862,21 @@ app.put("/add_reaction", async (request, response) => {
         console.log(error);
     }
 });
+
+
+app.get("/caratteriGiornalieri", async (request, response) => {
+    try {
+        let caratteri = await userModel.findOne({username: request.query.username},{characters: true});
+
+        console.log("caratteri:: " + caratteri.characters[0].number);
+        response.send(caratteri.characters[0].number);
+
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+
 
 //  Check the existence of a user channel
 app.get("/channels/userChannels/existence", async (request, response) => {
@@ -736,6 +903,8 @@ app.get("/channels/userChannels/:channelName", async (request, response) => {
             });
             return;
         }
+
+        console.log('channel requested', request.params.channelName);
 
         const userChannels = await userModel.findOne( {username: username}, {channelsIds: true} )
         const channel = await channelModel.findOne({ name: request.params.channelName, channelType: "user" });
@@ -1024,3 +1193,6 @@ function compareSquealsDate(a, b){
         return 0;
     }
 }
+
+
+

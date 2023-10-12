@@ -1,6 +1,21 @@
 const mongoose = require("mongoose");
 const {mongo} = require("mongoose");
 
+
+const charactersSchema = new mongoose.Schema({
+    name:{
+        type: String,
+        required: true,
+    },
+    number:{
+        type : String,
+        required : true,
+        default : "",
+
+    }
+});
+
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -28,6 +43,11 @@ const userSchema = new mongoose.Schema({
     },
     channelsIds:{
         type: [String],
+        required: true,
+        default: [],
+    },
+    characters: {
+        type: [charactersSchema],
         required: true,
         default: [],
     }
@@ -146,6 +166,7 @@ const Inbox = mongoose.model("Inbox", inboxSchema);
 const Channel = mongoose.model("Channel", channelSchema);
 const Notification = mongoose.model("Notification", notificationSchema);
 const Reaction = mongoose.model("Reaction", reactionSchema);
+const Characters = mongoose.model("Characters", charactersSchema);
 
 exports.userModel = User;
 exports.squealModel = Squeal;
@@ -153,3 +174,4 @@ exports.inboxModel = Inbox;
 exports.channelModel = Channel;
 exports.notificationModel = Notification;
 exports.reactionModel = Reaction;
+exports.charactersSchema = Characters;
