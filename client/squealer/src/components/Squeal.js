@@ -97,7 +97,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
         console.log("username passato: " + sessionStorage.getItem("username"));
         let user = sessionStorage.getItem("username");
 
-        let tipi = ["like", "heart", "neutrale", "dislike", "angry"];
+        let tipi = ["like", "heart", "normal", "dislike", "angry"];
 
         console.log("prova id:: " + tipo + id);
 
@@ -113,6 +113,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
                 console.log(tipi[i] + "  :  " + tipo);
                 if(tipo !== tipi[i]){
                     document.getElementById(tipi[i] + id).style.color = "#ADB5BD";
+
                 }
             }
         }
@@ -124,10 +125,13 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
         },{ withCredentials: true })
             .then(function (response) {
                 console.log(response);
+                giveNumberReactions(id, tipo);
+
             })
             .catch(function (error) {
                 console.log(error);
             });
+
     }
 
     return(
@@ -155,15 +159,35 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
             <div className='col-12 d-flex'>
                 <button className='btn postbox-btn me-auto' data-bs-toggle="modal" data-bs-target={'#' + 'resquealModal'+ id}><i className="bi bi-chat-left-quote-fill"></i></button>
                 <div className='reactions' className='d-flex justify-content-center align-items-center gap-2'>
-                    <i className="bi bi-emoji-angry reactionIcon fs-5" id={"angry" + id} onClick={() => onLikeButtonClick("angry")}/>
+                    <i className="bi bi-emoji-angry reactionIcon fs-5" id={"angry" + id} onClick={() => onLikeButtonClick("angry")}>
+                        <span id="spanangry" className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
-                    <i className="bi bi-hand-thumbs-down-fill reactionIcon fs-5" id={"dislike" + id} onClick={() => onLikeButtonClick("dislike")}/>
+                        </span>
+                    </i>
 
-                    <i className="bi bi-emoji-neutral reactionIcon fs-5" id={"neutrale" + id} onClick={() => onLikeButtonClick("neutrale")}/>
+                    <i className="bi bi-hand-thumbs-down-fill reactionIcon fs-5" id={"dislike" + id} onClick={() => onLikeButtonClick("dislike")}>
+                        <span id="spandislike" className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
-                    <i className="bi bi-hand-thumbs-up-fill reactionIcon fs-5" id={"like" + id} onClick={() => onLikeButtonClick("like")}/>
+                        </span>
+                    </i>
 
-                    <i className="bi bi-suit-heart-fill reactionIcon fs-5" id={"heart" + id} onClick={() => onLikeButtonClick("heart")}/>
+                    <i className="bi bi-emoji-neutral reactionIcon fs-5" id={"normal" + id} onClick={() => onLikeButtonClick("normal")}>
+                        <span id="spannormal" className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+
+                        </span>
+                    </i>
+
+                    <i className="bi bi-hand-thumbs-up-fill reactionIcon fs-5" id={"like" + id} onClick={() => onLikeButtonClick("like")}>
+                        <span id="spanlike" className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+
+                        </span>
+                    </i>
+
+                    <i className="bi bi-suit-heart-fill reactionIcon fs-5" id={"heart" + id} onClick={() => onLikeButtonClick("heart")}>
+                        <span id="spanheart" className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+
+                        </span>
+                    </i>
                 </div>
             </div>
             <ReSquealModal resquealModalId={'resquealModal'+ id} squealBody={squealBody(text, img, geo)} username={username} propic={propic} from={from} date={formatDate(date)} id={id}/>
@@ -217,6 +241,23 @@ export function checkForTags(text) {
     // Add any remaining text after the last match
     components.push(text.substring(lastIndex));
     return components;
+}
+
+async function giveNumberReactions(id, tipo){
+
+      return await axios.get(`https://${getServerDomain()}/numberReaction?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
+        .then(response => {
+
+            console.log(response.data);
+            console.log("span" + tipo)
+                document.getElementById("span" + tipo).innerHTML = response.data;
+            })
+
+          .catch(error => {
+                console.log(error.message);
+
+          });
+
 }
 
 export default Squeal;

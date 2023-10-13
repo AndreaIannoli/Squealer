@@ -65,9 +65,11 @@ function Navbar() {
                         <li className='mb-md-4 d-inline-block d-md-block'><Link to='/notifications' className='pe-auto navbar-anchor fs-5' id='notificationsNavBtn'><i className="bi bi-bell-fill me-3"></i><div className='d-none d-md-inline'>Notifications</div></Link></li>
                         <li className='mb-md-4 d-inline-block d-md-block'><Link to='/messages' className='pe-auto navbar-anchor fs-5' id='messagesNavBtn'><i className="bi bi-envelope-fill me-3"></i><div className='d-none d-md-inline'>Messages</div></Link></li>
                     </ul>
-                    {admin === "isAdmin" ?
-                        <Link className='btn btn-primary btn-circle rounded-5 fs-5 fw-semibold ps-3 pe-3 w-100 mb-3 pe-auto' id='adminButton' to='/admin'>Admin</Link>: null
-                    }
+
+                            {admin === "isAdmin" ?
+                                (<Link className='btn btn-primary btn-circle rounded-5 fs-5 fw-semibold ps-3 pe-3 w-100 mb-3 pe-auto' id='adminButton' to='/admin'>Admin</Link>
+                                ): null}
+
                 </div>
                 {!logged ?
                     <div className='col-12 d-block d-md-block order-md-2 mt-3 px-0 mb-md-3' id='navbar-authentication-container'>

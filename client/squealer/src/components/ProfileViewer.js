@@ -81,9 +81,9 @@ function ProfileViewer() {
                                 <button className="btn btn-primary btn-circle rounded-5" onClick={()=>{blockUser(username); setBlock("isBlocked")}}>Blocca</button>
 
                             )}
-                            <button className="btn btn-primary btn-circle rounded-5">Aggiungi 500 caratteri</button>
-                            <button className="btn btn-primary btn-circle rounded-5">Aggiungi 1000 caratteri</button>
-                            <button className="btn btn-primary btn-circle rounded-5">Aggiungi 2000 caratteri</button>
+                            <button className="btn btn-primary btn-circle rounded-5" id="buttonCento" onClick={()=>{addCharacters(username,100)}}>Aggiungi 100 caratteri</button>
+                            <button className="btn btn-primary btn-circle rounded-5" id="buttonDuecento" onClick={()=>{addCharacters(username,200)}}>Aggiungi 200 caratteri</button>
+                            <button className="btn btn-primary btn-circle rounded-5" id="buttonCinquecento" onClick={()=>{addCharacters(username,500)}}>Aggiungi 500 caratteri</button>
 
                         </div> : null
 
@@ -168,6 +168,24 @@ async function unBlockUser(username){
             if (response.data === true) {
                 console.log("sbloccato")
                 return "blocked";
+            }
+        }).catch(error => {
+            console.log(error.message);
+
+        });
+}
+
+async function addCharacters(username,values){
+
+    return await axios.put(`https://${getServerDomain()}/add_characters`, {
+        username: username,
+        number: values
+
+    },{ withCredentials: true })
+        .then(response => {
+            if (response.data === true) {
+                console.log("aumento dei caratteri")
+                return "updateChar";
             }
         }).catch(error => {
             console.log(error.message);
