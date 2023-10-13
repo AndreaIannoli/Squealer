@@ -20,7 +20,10 @@ function Login() {
                 sessionStorage.setItem('username', document.getElementById('floatingUsername').value);
                 sessionStorage.setItem('userPropic', response.data['userPropic']);
                 navigate("/");
-            } else {
+            } else if( response.data.result === "blocked"){
+                alert("You are blocked ");
+            }
+            else {
                 document.getElementById('floatingPassword').classList.remove('is-valid');
                 document.getElementById('floatingPassword').classList.add('is-invalid');
                 document.getElementById('floatingPassword').nextElementSibling.innerHTML = 'Password is wrong!';

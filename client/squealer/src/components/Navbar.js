@@ -6,9 +6,12 @@ import {Link, useNavigate} from 'react-router-dom';
 import {useEffect, useState} from "react";
 import {getUserPropic} from "../services/AccountManager";
 import Spinner from "./Spinner";
+import {getServerDomain} from "../services/Config";
+import axios from "axios";
 
 function Navbar() {
     const logged = document.cookie.includes('loggedStatus');
+    let [admin, setAdmin] = useState();
     const navigate = useNavigate();
     const [propic, setPropic] = useState();
 
@@ -22,6 +25,32 @@ function Navbar() {
         }
         retrievePropic();
     }, []);
+
+    useEffect(() => {
+        async function retrieveAdmin() {
+            setAdmin(await checkAdmin());
+        }
+        retrieveAdmin();
+
+    }, []);
+    async function checkAdmin(){
+
+        return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+            .then(response => {
+                console.log("passa qui " )
+                if (response.data === true) {
+                    console.log("entri nel exist ?")
+                    return "isAdmin";
+                } else {
+                    console.log("entri qua");
+                    return "notAdmin";
+                }
+            }).catch(error => {
+                console.log(error.message);
+
+            });
+    }
+
     return (
         <div className='container-fluid pe-none' id='navbar-container'>
             <div className='row d-flex flex-column justify-content-between h-100'>
@@ -36,11 +65,8 @@ function Navbar() {
                         <li className='mb-md-4 d-inline-block d-md-block'><Link to='/notifications' className='pe-auto navbar-anchor fs-5' id='notificationsNavBtn'><i className="bi bi-bell-fill me-3"></i><div className='d-none d-md-inline'>Notifications</div></Link></li>
                         <li className='mb-md-4 d-inline-block d-md-block'><Link to='/messages' className='pe-auto navbar-anchor fs-5' id='messagesNavBtn'><i className="bi bi-envelope-fill me-3"></i><div className='d-none d-md-inline'>Messages</div></Link></li>
                     </ul>
-                    { logged ?
-                    <div className='d-flex justify-content-end d-md-block order-0 order-md-1'>
-                        <Link className='btn btn-primary btn-circle rounded-5 fs-5 fw-semibold ps-3 pe-3 w-100 mt-0 mt-md-5 mb-3 mb-md-0 me-3 ms-md-0 pe-auto' id='squealButton' to='/#postBox'>Squeal</Link>
-                    </div>
-                        : null
+                    {admin === "isAdmin" ?
+                        <Link className='btn btn-primary btn-circle rounded-5 fs-5 fw-semibold ps-3 pe-3 w-100 mb-3 pe-auto' id='adminButton' to='/admin'>Admin</Link>: null
                     }
                 </div>
                 {!logged ?

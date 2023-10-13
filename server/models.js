@@ -50,6 +50,16 @@ const userSchema = new mongoose.Schema({
         type: [charactersSchema],
         required: true,
         default: [],
+    },
+    admin:{
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    blocked:{
+        type: Boolean,
+        required: true,
+        default: false
     }
 });
 

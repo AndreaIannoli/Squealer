@@ -15,6 +15,8 @@ function ProfileViewer() {
     const [propic, setPropic] = useState(null);
     const [squeals, setSqueals] = useState(null);
     const { username } = useParams();
+    let [block,setBlock] = useState();
+    let [admin, setAdmin] = useState();
     useEffect( () => {
         async function retrieveSqueals() {
             setSqueals(await loadRelatedSqueals(username));
@@ -24,7 +26,37 @@ function ProfileViewer() {
             setPropic(await getUserPropic(username))
         }
         retrieveData();
+        async function retrieveAdmin() {
+            setAdmin(await checkAdmin());
+        }
+        retrieveAdmin();
+
+        async function retrieveBlock() {
+            setBlock(await checkBlock(username))
+        }
+        retrieveBlock();
     }, [username]);
+
+    async function checkBlock(username){
+        console.log(username);
+        return await axios.get(`https://${getServerDomain()}/existence_block?username=${username}`)
+            .then(response => {
+                //console.log("passa qui " + sessionStorage.getItem('username') )
+                if (response.data === "yes") {
+                    console.log("Controllo che l,untente sia bloccato o meno ")
+                    return "isBlocked";
+                } else {
+                    console.log("utente non bloccato");
+                    return "notBlocked";
+                }
+            }).catch(error => {
+                console.log(error.message);
+
+            });
+    }
+    console.log(username)
+
+
     return(
         <div className='container-fluid p-0 bg-dark'>
             <div className='row d-flex justify-content-center p-0 h-100'>
@@ -42,6 +74,20 @@ function ProfileViewer() {
                                 {username}
                             </div>
                         </div>
+                        { admin === "isAdmin"?   <div className="d-flex justify-content-center gap-3 mb-3">
+                            {block === "isBlocked" ? (
+                                <button className="btn btn-secondary btn-circle rounded-5" onClick={()=>{unBlockUser(username); setBlock("notBlocked")}}>Sblocca</button>
+                            ) : (
+                                <button className="btn btn-primary btn-circle rounded-5" onClick={()=>{blockUser(username); setBlock("isBlocked")}}>Blocca</button>
+
+                            )}
+                            <button className="btn btn-primary btn-circle rounded-5">Aggiungi 500 caratteri</button>
+                            <button className="btn btn-primary btn-circle rounded-5">Aggiungi 1000 caratteri</button>
+                            <button className="btn btn-primary btn-circle rounded-5">Aggiungi 2000 caratteri</button>
+
+                        </div> : null
+
+                        }
                     </div>
                     <div className='col-6 d-flex justify-content-center sticky-top pt-2 pt-md-0'>
                         <div className='bg-dark rounded-bottom-5 mt-5 mt-md-0 px-3 text-center opacity-75'>
@@ -80,5 +126,54 @@ async function loadRelatedSqueals(username) {
             console.log(error);
         });
 }
+
+async function checkAdmin(){
+
+    return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+        .then(response => {
+            console.log("passa qui " )
+            if (response.data === true) {
+                console.log("Faccio il controllo che l'utente sia admin")
+                return "isAdmin";
+            } else {
+                console.log("entri qua");
+                return "notAdmin";
+            }
+        }).catch(error => {
+            console.log(error.message);
+
+        });
+}
+async function blockUser(username){
+
+    return await axios.put(`https://${getServerDomain()}/block_user`, {
+        username: username
+    },{ withCredentials: true })
+        .then(response => {
+            if (response.data === true) {
+                console.log("bloccato")
+                return "blocked";
+            }
+        }).catch(error => {
+            console.log(error.message);
+
+        });
+}
+async function unBlockUser(username){
+
+    return await axios.put(`https://${getServerDomain()}/unblock_user`, {
+        username: username
+    },{ withCredentials: true })
+        .then(response => {
+            if (response.data === true) {
+                console.log("sbloccato")
+                return "blocked";
+            }
+        }).catch(error => {
+            console.log(error.message);
+
+        });
+}
+
 
 export default ProfileViewer;

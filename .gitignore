@@ -6,3 +6,13 @@
 /client/squealer/node_modules/
 /client/node_modules/
 /server/node_modules/
+*.json
+*.json
+client/package-lock.json
+client/package.json
+client/squealer/node_modules/.bin/acorn
+client/squealer/node_modules/.bin/ansi-html
+client/squealer/node_modules/.bin/autoprefixer
+client/squealer/node_modules/.bin/browserslist
+client/squealer/node_modules/.bin/css-blank-pseudo
+client/squealer/node_modules/.bin/css-has-pseudo

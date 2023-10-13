@@ -32,6 +32,7 @@ import Explore from "./pages/Explore";
 import ChannelCreation from "./pages/ChannelCreation";
 import Error from "./pages/Error";
 import Notifications from "./pages/Notifications";
+import Admin from "./pages/Admin";
 
 export const router = createBrowserRouter([
     {
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
     {
         path: "/notifications",
         element: <Notifications />,
+    },
+    {
+        path: "/admin",
+        element: <Admin />,
     },
     {
         path: "/profiles/:username",

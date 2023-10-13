@@ -721,11 +721,13 @@ app.get("/squeals/squeal/:squealId", async (request, response) => {
         const user = await userModel.findOne({username: request.query.username}, {_id: true});
         if(!user){
             response.status(404).send("User not found");
+            return;
         }
 
         const squeal = await squealModel.findOne({_id: request.params.squealId}, {reactions: true});
         if(!user){
             response.status(404).send("Squeal not found");
+            return;
         }
         for(let i=0; i<squeal.reactions.length; i++) {
             if(squeal.reactions[i].usersIds.includes(user._id.toHexString())){
@@ -1214,6 +1216,263 @@ function compareSquealsDate(a, b){
         return 0;
     }
 }
+app.get("/admin", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userAdmin = await userModel.findOne( {username: username}, {admin: true} )
+        console.log(userAdmin)
+        if(userAdmin.admin) {
+            response.send(userAdmin.admin)
+        } else {
+            response.status(403).send('You are not admin');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+app.put("/block_user", async (request, response) => {
+    try {
+
+        console.log( request.body.username + "here we go")
+        const blocked_user= request.body.username;
+        await userModel.findOneAndUpdate({username: blocked_user}, {blocked: true});
+        response.send(true);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+app.put("/unblock_user", async (request, response) => {
+    try {
+
+        console.log( request.body.username + "here we go")
+        const unblocked_user= request.body.username;
+        await userModel.findOneAndUpdate({username: unblocked_user}, {blocked: false});
+        response.send(true);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/existence_block", async (request, response) => {
+    try {
+        if(await userModel.findOne({ username: request.query.username, blocked: true })) {
+            response.send('yes');
+        } else {
+            response.send('no');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+app.get("/merged_squeals", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const inboxes = await inboxModel.find({});
+        let squeals = [];
+        for(let inbox of inboxes){
+            const squealsIds = await inbox.squealsIds;
+
+            for(let squealId of squealsIds){
+                let squeal = await squealModel.findOne({ _id: squealId });
+
+                squeal = {
+                    id: squeal._id.toHexString(),
+                    from: inbox.receiver,
+                    sender: squeal.sender,
+                    geolocation: squeal.geolocation,
+                    img: squeal.img,
+                    text: squeal.text,
+                    date: squeal.date,
+                    resqueal: squeal.resqueal
+                };
+                squeals.push(squeal);
+            }
+        }
+        squeals.sort(compareSquealsDate);
+        response.send(squeals);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+app.get("/search_sender", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+        const searchTheSender = request.query.value; // Replace with the substring you want to search for
+        const inboxes = await inboxModel.find({});
+        console.log("controllo del sender"+searchTheSender)
+        //const resultSquealsSender = await squealModel.find({ sender: { $regex: new RegExp(searchTheSender), $options: 'i' } });
+
+        let squeals = [];
+        for(let inbox of inboxes){
+            const squealsIds = await inbox.squealsIds;
+            console.log("Diversi id degli squeal"+squealsIds)
+            for(let squealIdSender of squealsIds ){
+                let squeal = await squealModel.findOne({ _id: squealIdSender, sender: { $regex: new RegExp(searchTheSender), $options: 'i' } });
+
+                if(squeal !== null && squeal !== undefined){
+                    squeal = {
+                        id: squeal._id.toHexString(),
+                        from: inbox.receiver,
+                        sender: squeal.sender,
+                        geolocation: squeal.geolocation,
+                        img: squeal.img,
+                        text: squeal.text,
+                        date: squeal.date,
+                        resqueal: squeal.resqueal
+                    };
+                    squeals.push(squeal);
+                }
+
+            }
+        }
+        squeals.sort(compareSquealsDate);
+        response.send(squeals);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+
+
+app.get("/search_receiver", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+        const searchTheReceiver = request.query.value; // Replace with the substring you want to search for
+        const inboxes = await inboxModel.findOne({receiver: { $regex: new RegExp(searchTheReceiver), $options: 'i' }});
+        console.log("controllo del receiver" + inboxes)
+
+
+        let squeals = [];
+        for(let squealId of inboxes.squealsIds ){
+            let squeal = await squealModel.findOne({ _id: squealId });
+
+            if(squeal !== null && squeal !== undefined){
+                squeal = {
+                    id: squeal._id.toHexString(),
+                    from: inboxes.receiver,
+                    sender: squeal.sender,
+                    geolocation: squeal.geolocation,
+                    img: squeal.img,
+                    text: squeal.text,
+                    date: squeal.date,
+                    resqueal: squeal.resqueal
+                };
+                squeals.push(squeal);
+            }
+
+        }
+
+        squeals.sort(compareSquealsDate);
+        response.send(squeals);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/search_date", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+        // Data in formato ISO 8601
+        const searchTheDate = request.query.value;
+        console.log(searchTheDate);
+        const parts = searchTheDate.split('-'); // Dividi la stringa in parti
+        const day = parseInt(parts[2], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[0], 10);
+        console.log(day, month, year);
+        // Crea un oggetto Data a partire dai componenti
+        //const dateToCompare = new Date(year, month, day);
+        //console.log(dateToCompare.getDate() + " " + (dateToCompare.getMonth()+1) + " " + dateToCompare.getFullYear() + "importato")
+        // Replace with the substring you want to search for
+        const inboxes = await inboxModel.find({});
+
+
+
+        let squeals = [];
+        for(let inbox of inboxes){
+            const squealsIds = await inbox.squealsIds;
+            for(let squealIdSender of squealsIds ){
+                let squeal = await squealModel.findOne({ _id: squealIdSender });
+                //, date: { $regex: new RegExp(searchTheDate), $options: 'i' }
+                if(squeal !== null && squeal !== undefined){
+                    console.log(squeal.date)
+                    const squealDate = new Date(squeal.date);
+                    console.log(squealDate.getDate());
+                    console.log(squealDate.getDate() + " " + (squealDate.getMonth()+1) + " " + squealDate.getFullYear());
+
+                    if (
+                        day === squealDate.getDate() &&
+                        month === (squealDate.getMonth()+1) &&
+                        year === squealDate.getFullYear()
+                    ){
+                        console.log("sono qui")
+                        squeal = {
+                            id: squeal._id.toHexString(),
+                            from: inbox.receiver,
+                            sender: squeal.sender,
+                            geolocation: squeal.geolocation,
+                            img: squeal.img,
+                            text: squeal.text,
+                            date: squeal.date,
+                            resqueal: squeal.resqueal
+                        };
+                        squeals.push(squeal);
+                    }
+
+                }
+
+            }
+        }
+        response.send(squeals);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
 
 
 
