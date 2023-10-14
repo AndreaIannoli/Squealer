@@ -4,6 +4,7 @@ import {Link, useNavigate} from "react-router-dom";
 import axios from "axios";
 import defaultPropic from "../img/default_propic.jpg";
 import {getServerDomain} from "../services/Config";
+import {Buffer} from 'buffer';
 
 function Registration() {
     const navigate = useNavigate();

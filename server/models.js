@@ -145,6 +145,15 @@ const channelSchema = new mongoose.Schema({
         type: String,
         required: true,
         default: "public",
+    },
+    writers: {
+        type: [String],
+        required: true,
+        default: []
+    },
+    writingRestriction: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -184,4 +193,5 @@ exports.inboxModel = Inbox;
 exports.channelModel = Channel;
 exports.notificationModel = Notification;
 exports.reactionModel = Reaction;
+
 exports.charactersSchema = Characters;

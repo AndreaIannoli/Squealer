@@ -16,3 +16,5 @@ client/squealer/node_modules/.bin/autoprefixer
 client/squealer/node_modules/.bin/browserslist
 client/squealer/node_modules/.bin/css-blank-pseudo
 client/squealer/node_modules/.bin/css-has-pseudo
+client/squealer/node_modules/
+server/node_modules/

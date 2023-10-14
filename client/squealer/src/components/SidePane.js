@@ -6,7 +6,7 @@ import {getServerDomain} from "../services/Config";
 import Tag from "./Tag";
 import {getUserPropic} from "../services/AccountManager";
 
-function SidePane() {
+function SidePane({mobile}) {
     const [results, setResults] = useState();
     useEffect(() => {
         async function retrieveResults() {
@@ -16,7 +16,7 @@ function SidePane() {
         document.getElementById("floatingSearch").addEventListener('input', retrieveResults);
     }, []);
     return(
-        <div className='container-fluid' id='sidepane-container'>
+        <div className={'container-fluid ' + (mobile ? 'border-0' : 'vh-100 bg-black')} id='sidepane-container'>
             <div className='row'>
                 <div className='col-12'>
                     <div className="form-floating mt-3">

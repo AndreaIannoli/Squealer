@@ -1,5 +1,5 @@
 import '../styles/PostBox.css';
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 import axios from "axios";
 import Tagify from '@yaireo/tagify';
 import {getServerDomain} from "../services/Config";
@@ -11,6 +11,8 @@ import {checkPropic} from "./Navbar";
 
 function PostBox({update}) {
     const [propic, setPropic] = useState();
+    const [squealError, setSquealError] = useState('');
+    const [squealResult, setSquealResult] = useState('');
     useEffect(() => {
         const textarea = document.getElementById('squealTextarea');
         textarea.addEventListener('input', resizeTextarea);
@@ -170,7 +172,7 @@ function PostBox({update}) {
         if(postType === "img") {
             axios.post(`https://${getServerDomain()}/post_squeal`, {
                 img: squealBody,
-                receivers: JSON.parse(receivers).map(user => user.value)
+                receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
                 .then(function (response) {
                     console.log(response);
@@ -178,14 +180,18 @@ function PostBox({update}) {
                     document.getElementById("squealTextarea").value = "";
                     document.getElementById("receivers").value = "";
                     cancelImgBody();
+                    setSquealError('');
+                    setSquealResult('Squeal posted!');
                 })
                 .catch(function (error) {
+                    setSquealResult('');
+                    setSquealError(error.response.data);
                     console.log(error);
                 });
         } else if(postType === "geo") {
             axios.post(`https://${getServerDomain()}/post_squeal`, {
                 geolocation: [squealBody.lat.toString(), squealBody.lng.toString()],
-                receivers: JSON.parse(receivers).map(user => user.value)
+                receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
                 .then(function (response) {
                     console.log(response);
@@ -193,22 +199,30 @@ function PostBox({update}) {
                     document.getElementById("squealTextarea").value = "";
                     document.getElementById("receivers").value = "";
                     cancelMapBody();
+                    setSquealError('');
+                    setSquealResult('Squeal posted!');
                 })
                 .catch(function (error) {
+                    setSquealResult('');
+                    setSquealError(error.response.data);
                     console.log(error);
                 });
         } else {
             axios.post(`https://${getServerDomain()}/post_squeal`, {
                 text: squealBody,
-                receivers: JSON.parse(receivers).map(user => user.value)
+                receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
                 .then(function (response) {
                     console.log(response);
                     update(currentKey => currentKey+1);
                     document.getElementById("squealTextarea").value = "";
                     document.getElementById("receivers").value = "";
+                    setSquealError('');
+                    setSquealResult('Squeal posted!');
                 })
                 .catch(function (error) {
+                    setSquealResult('');
+                    setSquealError(error.response.data);
                     console.log(error);
                 });
         }
@@ -226,7 +240,7 @@ function PostBox({update}) {
                         <input type="text" className="form-control rounded-end-5 bg-transparent border-0" placeholder="@Username or §channel" aria-label="Username"
                                aria-describedby="basic-addon1" id='receivers' required/>
                     </div>
-                    <textarea className="form-control bg-transparent border-0" aria-label="What's you want to squeal?" id="squealTextarea" placeholder="What's you want to squeal?" required></textarea>
+                    <textarea className="form-control bg-transparent border-0 text-black" aria-label="What's you want to squeal?" id="squealTextarea" placeholder="What's you want to squeal?" required></textarea>
                     <div className='col-12 p-0' id='squealAttachContainer'></div>
                     <div className='d-flex'>
                         <button className='btn postbox-btn' data-bs-toggle="modal" data-bs-target="#imgModal"><i className="bi bi-images"></i></button>
@@ -234,6 +248,11 @@ function PostBox({update}) {
                         <span id={"CharactersCount"}></span>
                         <button className='btn btn-primary rounded-5 ms-auto' id={"buttonSqueal"} onClick={() => {postSqueal(postType,  getSquealBody())}}>Squeal<i className="bi bi-send-fill ms-2"></i></button>
                     </div>
+                    {squealError ?
+                        <div className="text-danger text-center">{squealError}</div>
+                        :
+                        (squealResult ? <div className="text-success text-center">{squealResult}</div> : null)
+                    }
                     <div className="modal fade" id="mapModal" tabIndex="-1" aria-labelledby="exampleModalLabel"
                          aria-hidden="true" data-backdrop="false">
                         <div className="modal-dialog modal-dialog-centered">

@@ -13,6 +13,8 @@
   --color-background-400: #575757;
   --color-background-500: #717171;
   --color-background-600: #8b8b8b;
+
+  --bs-body-color: grey;
 }
 
 * {

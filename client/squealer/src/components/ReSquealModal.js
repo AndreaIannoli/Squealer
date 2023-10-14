@@ -95,16 +95,16 @@ function ReSquealModal({resquealModalId, squealBody, username, propic, from, dat
                                                     <div className='row'>
                                                         <div className='col-2 col-md-2 pe-0 my-2'><img src={propic} className='w-100' id='propic'/></div>
                                                         <div className='col-10 col-md-10 d-flex align-items-center'>
-                                                            <div className='fs-6 fw-semibold '>{username}</div>
+                                                            <div className='fs-6 fw-semibold text-black'>{username}</div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className='col-12'>
+                                                <div className='col-12 text-black'>
                                                     {squealBody}
                                                 </div>
                                             </div>
                                         </div>
-                                        <textarea className="form-control bg-transparent border-0" aria-label="What's you want to squeal?" id={textAreaId} placeholder="What's you want to squeal?" required></textarea>
+                                        <textarea className="form-control bg-transparent border-0 text-black" aria-label="What's you want to squeal?" id={textAreaId} placeholder="What's you want to squeal?" required></textarea>
                                         <div className='d-flex'>
                                             <button className='btn btn-primary rounded-5 ms-auto' data-bs-dismiss="modal" onClick={() => {postResqueal(document.getElementById(textAreaId).value, from, username, id)}}>Squeal<i className="bi bi-send-fill ms-2"></i></button>
                                         </div>

@@ -147,6 +147,7 @@ app.post("/register_user", async (request, response) => {
             username: request.body.username,
             password: request.body.password,
             characters: caratteri,
+            propic: request.body.propic
         });
 
         console.log("user::: " + user);
@@ -502,7 +503,10 @@ app.post("/post_squeal", async (request, response) => {
         }
         request.body['sender'] = username;
         let flag = true;
-
+        if(!request.body.receivers){
+            response.status(400).send('You must specify at least one receiver');
+            return;
+        }
         const receiversArr0 = request.body.receivers;
         let differenza = 0;
         for(let receiverUsername of receiversArr0){
@@ -541,41 +545,55 @@ app.post("/post_squeal", async (request, response) => {
                 name: "heart",
             })
             await reactionHeart.save();
-            const squeal = new squealModel({
-                sender: request.body.sender,
-                text: request.body.text,
-                geolocation: request.body.geolocation,
-                img: request.body.img,
-                date: new Date(),
-                reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
-            });
 
-
-
-            const newSqueal = await squeal.save();
-            const receiversArr = request.body.receivers;
-            for(let receiverUsername of receiversArr){
-                if (await inboxModel.findOne({ receiver: receiverUsername })) {
-                    if(receiverUsername.charAt(0) === '§') {
-                        //aggiorna caratteri giornaalieri---------
+            if(!(request.body.text.trim() !== "") && !request.body.geolocation && !request.body.img) {
+            response.status(400).send('Squeal body is mandatory');
+            return;
+        }
+        const squeal = new squealModel({
+            sender: request.body.sender,
+            text: request.body.text,
+            geolocation: request.body.geolocation,
+            img: request.body.img,
+            date: new Date(),
+            reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
+        });
+        const sender = await userModel.findOne({username: request.body.sender});
+        const newSqueal = await squeal.save();
+        const receiversArr = request.body.receivers;
+        for(let receiverUsername of receiversArr){
+            if (await inboxModel.findOne({ receiver: receiverUsername })) {
+                if(receiverUsername.charAt(0) === '§') {//aggiorna caratteri giornaalieri---------
                         const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
                         let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
                         arrayCaratteri.characters[0].number = String(aggiunta);
                         await userModel.findOneAndUpdate({username: request.body.sender}, {$set: {characters: arrayCaratteri.characters}});
 
-                        await inboxModel.findOneAndUpdate(
-                            {receiver: receiverUsername}, // Query condition to find the document
-                            {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
-                            {new: true}, // Option to return the updated document
-                        );
-                        const notification = new notificationModel({
-                            title: "New Squeal from " + request.body.sender,
-                            text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*} in {*tag*{" + receiverUsername + "}*tag*}",
-                            sender: request.body.sender,
-                            date: new Date(),
-                        });
-                        await notification.save();
-                        const channel = await channelModel.findOne({name: receiverUsername.slice(1)}, {_id: true})
+                        const channel = await channelModel.findOne({name: receiverUsername.slice(1)});
+                    //TODO: aggiungere check admin
+                    if(channel.channelType === 'squealer') {
+                        response.status(403).send('You have no permission to write on a squealer channel');
+                        return
+                    } else if(!sender.channelsIds.includes(channel._id.toHexString())) {
+                        response.status(403).send('You are not a member of the channel ' + channel.name);
+                        return;
+                    } else if(channel.writingRestriction && !channel.writers.includes(sender.username)) {
+                        response.status(403).send('You have no permits to write on ' + channel.name);
+                        return;
+                    }
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: receiverUsername}, // Query condition to find the document
+                        {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    const notification = new notificationModel({
+                        title: "New Squeal from " + request.body.sender,
+                        text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*} in {*tag*{" + receiverUsername + "}*tag*}",
+                        sender: request.body.sender,
+                        date: new Date(),
+                    });
+                    await notification.save();
+
                         const channelUsers = await userModel.find({channelsIds: {$in: [channel._id.toHexString()]}})
                         for(let user of channelUsers) {
                             await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
@@ -604,9 +622,7 @@ app.post("/post_squeal", async (request, response) => {
                 }
             }
 
-            response.json({
-                result: "successful"
-            });
+            response.send('squeal posted');
         }
     } catch (error) {
         console.log(error);
@@ -913,6 +929,456 @@ app.get("/channels/userChannels/existence", async (request, response) => {
             response.send('exist');
         } else {
             response.send('notExist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Promote user to owner
+app.post("/channels/userChannels/userChannel/owners", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const userToPromote = await userModel.findOne({username: request.body.toPromote});
+        if(!userToPromote){
+            response.status(404).send('User to promote doesn\'t exist');
+            return;
+        } else if(channel.owners.includes(userToPromote.username)) {
+            response.status(400).send('User to promote is already an owner');
+            return;
+        }
+        if(channel) {
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    const usernameToPromote = userToPromote.username;
+                    await channelModel.findOneAndUpdate({name: channel.name}, {$push: {owners: usernameToPromote}}, {new: true});
+                    const notification = new notificationModel({
+                        title: "You have been promoted to owner by " + username,
+                        text: "You have been promoted to owner in {*tag*{§" + channel.name + "}*tag*}",
+                        sender: username,
+                        date: new Date(),
+                    });
+                    await notification.save();
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: '@' + usernameToPromote}, // Query condition to find the document
+                        {$push: {notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    response.send('User promoted');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Depromote user from channel owner
+app.post("/channels/userChannels/userChannel/owners/depromote", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const userToDepromote = await userModel.findOne({username: request.body.toDepromote});
+        if(!userToDepromote){
+            response.status(404).send('User to depromote doesn\'t exist');
+            return;
+        } else if(!channel.owners.includes(userToDepromote.username)) {
+            response.status(400).send('User to depromote is not an owner');
+            return;
+        }
+        if(channel) {
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    const usernameToDepromote = userToDepromote.username;
+                    await channelModel.findOneAndUpdate({name: channel.name}, {$pull: {owners: usernameToDepromote}}, {new: true});
+                    const notification = new notificationModel({
+                        title: "You have been depromoted from owner by " + username,
+                        text: "You have been depromoted from owner in {*tag*{§" + channel.name + "}*tag*}",
+                        sender: username,
+                        date: new Date(),
+                    });
+                    await notification.save();
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: '@' + usernameToDepromote}, // Query condition to find the document
+                        {$push: {notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    response.send('User depromoted');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Promote a user to writer
+app.post("/channels/userChannels/userChannel/writers", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const userToAdd = await userModel.findOne({username: request.body.toAdd});
+        if(!userToAdd){
+            response.status(404).send('User to add to writers doesn\'t exist');
+            return;
+        } else if(!userToAdd.channelsIds.includes(channel._id.toHexString())) {
+            response.status(400).send('User to add to writers is not a member of this channel');
+            return;
+        } else if(channel.writers.includes(userToAdd.username)) {
+            response.status(400).send('User to add is already a writer');
+            return;
+        }
+        if(channel) {
+            if(channel.writingRestriction !== true) {
+                response.status(400).send('Channel has no writing restriction');
+                return;
+            }
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    const usernameToAdd = userToAdd.username;
+                    await channelModel.findOneAndUpdate({name: channel.name}, {$push: {writers: usernameToAdd}}, {new: true});
+                    const notification = new notificationModel({
+                        title: "You have been promoted to writer by " + username,
+                        text: "You have been promoted to writer in {*tag*{§" + channel.name + "}*tag*}",
+                        sender: username,
+                        date: new Date(),
+                    });
+                    await notification.save();
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: '@' + usernameToAdd}, // Query condition to find the document
+                        {$push: {notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    response.send('User added to writers');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Depromote a user from writer
+app.post("/channels/userChannels/userChannel/writers/depromote", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const userToRemove = await userModel.findOne({username: request.body.toRemove});
+        if(!userToRemove){
+            response.status(404).send('User to remove from writers doesn\'t exist');
+            return;
+        } else if(!channel.writers.includes(userToRemove.username)) {
+            response.status(400).send('User to remove from writers is not a writer');
+            return;
+        }
+        if(channel) {
+            if(channel.writingRestriction !== true) {
+                response.status(400).send('Channel has no writing restriction');
+                return;
+            }
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    const usernameToRemove = userToRemove.username;
+                    await channelModel.findOneAndUpdate({name: channel.name}, {$pull: {writers: usernameToRemove}}, {new: true});
+                    const notification = new notificationModel({
+                        title: "You have been depromoted from writer by " + username,
+                        text: "You have been depromoted from writer in {*tag*{§" + channel.name + "}*tag*}",
+                        sender: username,
+                        date: new Date(),
+                    });
+                    await notification.save();
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: '@' + usernameToRemove}, // Query condition to find the document
+                        {$push: {notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    response.send('User removed from writers');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Remove a member to a channel
+app.post("/channels/userChannels/userChannel/members/remove", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const userToRemove = await userModel.findOne({username: request.body.toRemove});
+        if(!userToRemove){
+            response.status(404).send('User to remove from members doesn\'t exist');
+            return;
+        } else if(!userToRemove.channelsIds.includes(channel._id.toHexString())) {
+            response.status(400).send('User to remove from members is not a member of the channel');
+            return;
+        }
+        if(channel) {
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    await userModel.findOneAndUpdate({username: userToRemove.username}, {$pull: {channelsIds: channel._id.toHexString()}}, {new: true});
+                    const notification = new notificationModel({
+                        title: "You have been removed from channel by " + username,
+                        text: "You have been removed from {*tag*{§" + channel.name + "}*tag*}",
+                        sender: username,
+                        date: new Date(),
+                    });
+                    await notification.save();
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: '@' + userToRemove.username}, // Query condition to find the document
+                        {$push: {notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    response.send('User removed from members');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Add a member to a channel
+app.post("/channels/userChannels/userChannel/members", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const userToAdd = await userModel.findOne({username: request.body.toAdd});
+        if(!userToAdd){
+            response.status(404).send('User to add to members doesn\'t exist');
+            return;
+        } else if(userToAdd.channelsIds.includes(channel._id.toHexString())) {
+            response.status(400).send('User to add to members is already a member of the channel');
+            return;
+        }
+        if(channel) {
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    await userModel.findOneAndUpdate({username: userToAdd.username}, {$push: {channelsIds: channel._id.toHexString()}}, {new: true});
+                    const notification = new notificationModel({
+                        title: "You have been added to a channel by " + username,
+                        text: "Check out your new channel {*tag*{§" + channel.name + "}*tag*}",
+                        sender: username,
+                        date: new Date(),
+                    });
+                    await notification.save();
+                    await inboxModel.findOneAndUpdate(
+                        {receiver: '@' + userToAdd.username}, // Query condition to find the document
+                        {$push: {notificationsIds: notification._id.toHexString()}}, // Update operation to push the new string
+                        {new: true}, // Option to return the updated document
+                    );
+                    response.send('User added to members');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Set channel privacy
+app.post("/channels/userChannels/userChannel/privacy", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const privacy = request.body.privacy;
+        if(!privacy){
+            response.status(400).send('Privacy must be specified in the request');
+            return;
+        } else if(privacy === channel.access) {
+            response.status(400).send('Channel is already ' + privacy);
+            return;
+        } else if(privacy !== 'public' && privacy !== 'private') {
+            response.status(400).send('You have to specify a valid value for the channel privacy');
+            return;
+        }
+        if(channel) {
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    await channelModel.findOneAndUpdate({name: channel.name}, {$set: {access: privacy}}, {new: true});
+                    response.send('Privacy changed');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+//  Set channel writing restriction
+app.post("/channels/userChannels/userChannel/writingrestriction", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const writingRestriction = request.body.value;
+        if(writingRestriction === ''){
+            response.status(400).send('Writing restriction value must be specified in the request');
+            return;
+        } else if(writingRestriction === channel.writingRestriction) {
+            response.status(400).send('Channel writing restriction is already ' + writingRestriction);
+            return;
+        }
+        if(channel) {
+            if(userChannels && userChannels.channelsIds.includes(channel._id.toHexString())) {
+                if(channel.owners.includes(username)) {
+                    await channelModel.findOneAndUpdate({name: channel.name}, {$set: {writingRestriction: writingRestriction}}, {new: true});
+                    response.send('Writing restriction changed');
+                    return;
+                } else {
+                    response.status(403).send('You are not an owner of this channel');
+                    return;
+                }
+            } else {
+                response.status(403).send('You are not a member of this channel');
+                return;
+            }
+        } else {
+            response.status(404).send('Channel doesn\'t exist');
         }
     } catch (error) {
         response.status(500).send(error);

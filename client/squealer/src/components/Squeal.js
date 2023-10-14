@@ -149,11 +149,11 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
                 <div className='row'>
                     <div className='col-2 col-md-1 pe-0 my-2'><img src={propic} className='w-100' id='propic'/></div>
                     <div className='col-10 col-md-11 d-flex align-items-center'>
-                        <div className='fs-6 fw-semibold '>{username}</div>
+                        <div className='fs-6 fw-semibold text-black'>{username}</div>
                     </div>
                 </div>
             </div>
-            <div className='col-12'>
+            <div className='col-12 text-black'>
                 {squealBody(text, img, geo)}
             </div>
             <div className='col-12 d-flex'>
