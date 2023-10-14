@@ -14,22 +14,9 @@
     transition: all 0.5s;
 }
 
-#spanangry{
-    font-size: 10px;
-
+i{
+    margin-left: 25px;
 }
-#spandislike{
-    font-size: 10px;
-
-}
-#spannormal{
-    font-size: 10px;
-
-}
-#spanlike{
-    font-size: 10px;
-
-}
-#spanheart{
+.position-relative{
     font-size: 10px;
 }

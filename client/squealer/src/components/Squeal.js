@@ -20,6 +20,18 @@ import Spinner from "./Spinner";
 
 function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
 
+    let [admin, setAdmin] = useState();
+
+    /*useEffect(() => {
+        async function retriveAdmin(){
+            setAdmin(await checkAdmin())
+        }
+        retriveAdmin();
+    });
+
+     */
+
+
     function squealBody(text, img, geo) {
         if(geo.length !== 0) {
             const pos = {lat: parseFloat(geo[0]), lng: parseFloat(geo[1])}
@@ -40,8 +52,10 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
         }
     }
 
+
     const [resquealCheck, setResquealCheck] = useState();
     const [reactionCheck, setReactionCheck] = useState();
+
     useEffect(() => {
         async function retrieveResqueal() {
             setResquealCheck(await checkResqueal());
@@ -88,31 +102,79 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
             document.getElementById(response.data + id).style.color = "#1DA0F2";
         }
     }
+    async function checkAdmin(){
+        return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+            .then(response => {
+                console.log("passa qui " )
+                if (response.data === true) {
+                    console.log("entri nel exist ?")
+                    return "isAdmin";
+                } else {
+                    console.log("entri qua");
+                    return "notAdmin";
+                }
+            }).catch(error => {
+                console.log(error.message);
+
+            });
+    }
 
     async function onLikeButtonClick(l){
         let tipo = String(l);
-        console.log("" + tipo);
-
+        //console.log("" + tipo);
         //await axios.put(`https://${getServerDomain()}/squealId_reaction?sender=${this.props.from}&text=${this.props.text}`)
-        console.log("username passato: " + sessionStorage.getItem("username"));
+        //console.log("username passato: " + sessionStorage.getItem("username"));
         let user = sessionStorage.getItem("username");
 
+        //fare la roba dell'admin
+        let admin = await checkAdmin();
+        console.log("admin:: " + admin);
+
         let tipi = ["like", "heart", "normal", "dislike", "angry"];
-
-        console.log("prova id:: " + tipo + id);
-
-        console.log("this.props.id:::: " + id);
+        //console.log("prova id:: " + tipo + id);
+        //console.log("this.props.id:::: " + id);
 
         let color = document.getElementById(tipo + id).style.color;
+        // funzione per convertire colore RGB in esadecimale
+        function rgbToHex(rgb) {
+            var esadecimale = Number(rgb).toString(16);
+            if (esadecimale.length < 2) {
+                esadecimale = "0" + esadecimale;
+            }
+            return esadecimale;
+        }
+
 
         if(color === "blue"){
             document.getElementById(tipo + id).style.color = "#ADB5BD";
         }else{
             document.getElementById(tipo + id).style.color = "#1DA0F2";
             for(let i = 0; i < tipi.length; i++){
-                console.log(tipi[i] + "  :  " + tipo);
+                //console.log(tipi[i] + "  :  " + tipo);
                 if(tipo !== tipi[i]){
-                    document.getElementById(tipi[i] + id).style.color = "#ADB5BD";
+                    //console.log("prima dell'if: " + tipi[i]);
+                    var coloreCalcolato = window.getComputedStyle(document.getElementById(tipi[i] + id)).color;
+                    var arrayRgb = coloreCalcolato.match(/\d+/g);
+
+                    // Converti ciascun componente RGB in esadecimale
+                    var coloreEsadecimale = "#" + arrayRgb.map(function (x) {
+                        return rgbToHex(x);
+                    }).join("");
+
+                    //console.log("coloreEsadecimale:: " + coloreEsadecimale);
+                    if(admin === "notAdmin"){
+                        if(coloreEsadecimale  === "#1da0f2"){
+                            //console.log("cambio:: ");
+                            if((parseInt(document.getElementById("span" + tipi[i] + id).innerText) - 1) === 0){
+                                document.getElementById("span" + tipi[i] + id).innerText = "";
+                            }else{
+                                document.getElementById("span" + tipi[i] + id).innerText = String(parseInt(document.getElementById("span" + tipi[i] + id).innerText) - 1);
+                            }
+                            //console.log("cambio:: " + "span" + tipi[i]);
+                        }
+                        document.getElementById(tipi[i] + id).style.color = "#ADB5BD";
+                    }
+
 
                 }
             }
@@ -133,6 +195,46 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
             });
 
     }
+    function ottieniIDSpan() {
+        // Seleziona tutti gli elementi span sulla pagina
+        var spanElements = document.querySelectorAll('span');
+
+        // Itera su tutti gli elementi span
+        spanElements.forEach(function(spanElement) {
+            // Ottieni l'ID di ciascun elemento span
+            var spanID = spanElement.id;
+
+            // Visualizza l'ID o fai qualcos'altro con esso
+            //console.log("ID dello span: " + spanID + "    " + spanID.charAt(4) + "  " + spanID.substring(11, spanID.length));
+
+            if(spanID.charAt(4) === 'a'){
+                //console.log("angry   " +  spanID.substring(9, spanID.size));
+                let idS = spanID.substring(9, spanID.length);
+                giveNumberReactions(idS, "angry");
+            }else if(spanID.charAt(4) === 'd'){
+                //console.log("dislike   " +  spanID.substring(11, spanID.size));
+                let idS = spanID.substring(11, spanID.length);
+                giveNumberReactions(idS, "dislike");
+            }else if(spanID.charAt(4) === 'n'){
+                //console.log("normal   " +  spanID.substring(10, spanID.size));
+                let idS = spanID.substring(10, spanID.length);
+                console.log("id di normal: " + idS);
+                giveNumberReactions(idS, "normal");
+            }else if(spanID.charAt(4) === 'l'){
+                //console.log("like   " +  spanID.substring(8, spanID.size));
+                let idS = spanID.substring(8, spanID.length);
+                giveNumberReactions(idS, "like");
+            }else if(spanID.charAt(4) === 'h'){
+                //console.log("heart   " +  spanID.substring(9, spanID.size));
+                let idS = spanID.substring(9, spanID.length);
+                giveNumberReactions(idS, "heart");
+            }
+
+
+
+        });
+    }
+    ottieniIDSpan();
 
     return(
     <div className='container-fluid'>
@@ -160,31 +262,31 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
                 <button className='btn postbox-btn me-auto' data-bs-toggle="modal" data-bs-target={'#' + 'resquealModal'+ id}><i className="bi bi-chat-left-quote-fill"></i></button>
                 <div className='reactions' className='d-flex justify-content-center align-items-center gap-2'>
                     <i className="bi bi-emoji-angry reactionIcon fs-5" id={"angry" + id} onClick={() => onLikeButtonClick("angry")}>
-                        <span id="spanangry" className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
+                        <span id={"spanangry" + id} className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
                         </span>
                     </i>
 
                     <i className="bi bi-hand-thumbs-down-fill reactionIcon fs-5" id={"dislike" + id} onClick={() => onLikeButtonClick("dislike")}>
-                        <span id="spandislike" className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
+                        <span id={"spandislike" + id} className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
                         </span>
                     </i>
 
                     <i className="bi bi-emoji-neutral reactionIcon fs-5" id={"normal" + id} onClick={() => onLikeButtonClick("normal")}>
-                        <span id="spannormal" className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <span id={"spannormal" + id} className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
                         </span>
                     </i>
 
                     <i className="bi bi-hand-thumbs-up-fill reactionIcon fs-5" id={"like" + id} onClick={() => onLikeButtonClick("like")}>
-                        <span id="spanlike" className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <span id={"spanlike" + id} className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
                         </span>
                     </i>
 
                     <i className="bi bi-suit-heart-fill reactionIcon fs-5" id={"heart" + id} onClick={() => onLikeButtonClick("heart")}>
-                        <span id="spanheart" className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <span id={"spanheart" + id} className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
 
                         </span>
                     </i>
@@ -194,7 +296,11 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
         </div>
     </div>
     );
+
+
 }
+
+
 
 export function formatDate(date) {
     const squealDate = new Date(date);
@@ -244,20 +350,19 @@ export function checkForTags(text) {
 }
 
 async function giveNumberReactions(id, tipo){
-
       return await axios.get(`https://${getServerDomain()}/numberReaction?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
         .then(response => {
-
-            console.log(response.data);
-            console.log("span" + tipo)
-                document.getElementById("span" + tipo).innerHTML = response.data;
+                //console.log("response data:: " + response.data);
+                //console.log("span" + tipo);
+                if(response.data === 0){
+                    document.getElementById("span" + tipo + id).innerHTML = "";
+                }else{
+                    document.getElementById("span" + tipo + id).innerHTML = response.data;
+                }
             })
-
           .catch(error => {
                 console.log(error.message);
-
           });
-
 }
 
 export default Squeal;

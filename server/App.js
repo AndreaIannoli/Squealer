@@ -6,6 +6,7 @@ const bodyParser = require("express");
 const jwt = require("jsonwebtoken");
 const cronJob = require("node-cron");
 const fs = require("fs");
+const { createCanvas, loadImage } = require('canvas');
 const app = express ();
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
@@ -24,6 +25,100 @@ const cors = require('cors');
 const {json} = require("express/lib/response");
 
 mongoose.connect('mongodb://127.0.0.1:27017/Squealer');
+
+// Imposta l'URL dell'API di destinazione
+const apiDestinazione = 'URL_Dell_API_Di_Destinazione';
+
+// Definisci la funzione cron asincrona
+const eseguiCronJob = async () => {
+    console.log("genero");
+    try {
+        let immagineBase64 = '';
+
+
+        const idImmagineCasuale = Math.floor(Math.random() * 1000);
+        const larghezza = 200;
+        const altezza = 200;
+
+        const url = `https://picsum.photos/${larghezza}/${altezza}?random=${idImmagineCasuale}`;
+
+
+        const img = new Image();
+        let base64data;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            const context = canvas.getContext('2d');
+            context.drawImage(img, 0, 0, img.width, img.height);
+
+            // Converti il canvas in base64
+            base64data = canvas.toDataURL('image/png').split(',')[1];
+            console.log(base64data);
+
+
+        const reactionAngry = new reactionModel({
+            name: "angry",
+            //usersIds: ["aCaso"],
+        })
+        await reactionAngry.save();
+        const reactionDislike = new reactionModel({
+            name: "dislike",
+        })
+        await reactionDislike.save();
+        const reactionNormal = new reactionModel({
+            name: "normal",
+        })
+        await reactionNormal.save();
+        const reactionLike = new reactionModel({
+            name: "like",
+        })
+        await reactionLike.save();
+        const reactionHeart = new reactionModel({
+            name: "heart",
+        })
+        await reactionHeart.save();
+        const squeal = new squealModel({
+            sender: "jorge",
+            text: "questo messaggio è generato automaticamente",
+            //geolocation: "",
+            img: 'data:image/png;base64,'+ base64data ,
+            date: new Date(),
+            reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
+        });
+
+        const newSqueal = await squeal.save();
+
+        //const receiversArr0 = ;
+
+        await inboxModel.findOneAndUpdate(
+            {receiver: "§prova immagini"}, // Query condition to find the document
+            {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
+            {new: true}, // Option to return the updated document
+        );
+        const notification = new notificationModel({
+            title: "New Squeal from " + " - ",
+            text: "Check out the new Squeal from {*tag*{@" + " - " + "}*tag*} in {*tag*{" + "§prova immagini" + "}*tag*}",
+            sender: "jorge",
+            date: new Date(),
+        });
+        await notification.save();
+        /*const channel = await channelModel.findOne({name: "§prova immagini"}, {_id: true})
+        const channelUsers = await userModel.find({channelsIds: {$in: "652a6759cf14972f79259798"}})
+        for (let user of channelUsers) {
+            await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
+        }*/
+
+
+
+    } catch (errore) {
+        console.error('Errore durante l\'invio dell\'immagine:', errore.message);
+    }
+};
+
+// Definisci il cronjob per eseguire ogni 10 secondi
+cronJob.schedule('*/10 * * * * *', eseguiCronJob);
+
 
 cronJob.schedule('0 0 * * *', async () => {
     //aggiorno caratteri giornalieri e tolgo la differenza ai cartetri settimanali
@@ -512,7 +607,16 @@ app.post("/post_squeal", async (request, response) => {
         for(let receiverUsername of receiversArr0){
             if(receiverUsername.charAt(0) === '§') {
                 const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
-                differenza = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+
+                if(request.body.text){
+                    differenza = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+
+                }else if(request.body.geolocation){
+                    differenza = parseInt(arrayCaratteri.characters[0].number) - 125;
+
+                }else if(request.body.img){
+                    differenza = parseInt(arrayCaratteri.characters[0].number) - 125;
+                }
             }
             if(differenza < 0){
                 console.log("superato numero di caratteri");
@@ -564,8 +668,18 @@ app.post("/post_squeal", async (request, response) => {
         for(let receiverUsername of receiversArr){
             if (await inboxModel.findOne({ receiver: receiverUsername })) {
                 if(receiverUsername.charAt(0) === '§') {//aggiorna caratteri giornaalieri---------
-                        const arrayCaratteri = await userModel.findOne({username: request.body.sender},{characters: true});
-                        let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+                        const arrayCaratteri = await userModel.findOne({username: request.body.sender}, {characters: true});
+                        let aggiunta = 0;
+                        if (request.body.text) {
+                            aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
+
+                        } else if (request.body.geolocation) {
+                            aggiunta = parseInt(arrayCaratteri.characters[0].number) - 125;
+                        } else if (request.body.img) {
+                            aggiunta = parseInt(arrayCaratteri.characters[0].number) - 125;
+                        }
+
+                        //let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
                         arrayCaratteri.characters[0].number = String(aggiunta);
                         await userModel.findOneAndUpdate({username: request.body.sender}, {$set: {characters: arrayCaratteri.characters}});
 
@@ -795,6 +909,15 @@ app.put("/add_reaction", async (request, response) => {
 
         const idUser = await userModel.findOne({username: request.body.username},{_id: true});
 
+        let admin = await userModel.findOne({username: request.body.username},{admin: true})
+        let flag = false;
+        if(admin.admin === true){
+            console.log("sei admin");
+            flag = true;
+        }
+
+        console.log("admin::: " + flag);
+
         if(index == 5){
 
             for(let i = 0; i < 5; i++){
@@ -809,21 +932,27 @@ app.put("/add_reaction", async (request, response) => {
             }
 
         }else{
+            if(flag === true){
+                array.reactions[index].usersIds.push(idUser._id);
+                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {reactions: array.reactions}},{new : true});
 
-            for(let i = 0; i < 5; i++){
-                const objWithIdIndex = array.reactions[i].usersIds.indexOf(idUser._id);
-                console.log("objWithIdIndex:: " + objWithIdIndex);
+            }else{
+                for(let i = 0; i < 5; i++){
+                    const objWithIdIndex = array.reactions[i].usersIds.indexOf(idUser._id);
+                    console.log("objWithIdIndex:: " + objWithIdIndex);
 
-                if (objWithIdIndex > -1) {
-                    array.reactions[i].usersIds.splice(objWithIdIndex, 1);
-                    await squealModel.findOneAndUpdate({_id:squealId}, {$set: {reactions: array.reactions}},{new : true});
-                    i = 5;
+                    if (objWithIdIndex > -1) {
+
+                        array.reactions[i].usersIds.splice(objWithIdIndex, 1);
+                        await squealModel.findOneAndUpdate({_id:squealId}, {$set: {reactions: array.reactions}},{new : true});
+                        i = 5;
+                    }
                 }
+
+                array.reactions[index].usersIds.push(idUser._id);
+                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {reactions: array.reactions}},{new : true});
+
             }
-
-            array.reactions[index].usersIds.push(idUser._id);
-            await squealModel.findOneAndUpdate({_id:squealId}, {$set: {reactions: array.reactions}},{new : true});
-
         }
 
         let total = 0;
@@ -831,7 +960,7 @@ app.put("/add_reaction", async (request, response) => {
         let negative = 0;
 
         for(let i = 0; i < 5; i++){
-            total = total + array.reactions.length;
+            total = total + array.reactions[i].usersIds.length;
         }
         console.log("total " + total);
 
@@ -842,60 +971,60 @@ app.put("/add_reaction", async (request, response) => {
 
 
         let user = await userModel.findOne({username: request.body.username});
-        if( user.admin !== true ){
-            const arrayCaratteri = await userModel.findOne({username: request.body.username},{characters: true});
 
-            console.log("charactersVariabile: " + arrayCaratteri);
-            console.log("characters 0: " + arrayCaratteri.characters[0].number);
+        const arrayCaratteri = await userModel.findOne({username: request.body.username},{characters: true});
 
-            if(total*0.25 < positive && total*0.25 > negative){
+        //console.log("charactersVariabile: " + arrayCaratteri);
+        //console.log("characters 0: " + arrayCaratteri.characters[0].number);
 
-                if(await squealModel.findOne({_id:squealId, CM: "popolare"})){
-                    console.log("è gia popolare");
-                }else{
-                    await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "popolare"}},{new : true});
+        if(total*0.25 < positive && total*0.25 > negative){
 
-                    let usernamePopolare = await squealModel.findOne({_id:squealId, CM: "popolare"}, {sender: true});
-                    console.log("username popolare::   " + usernamePopolare.get("sender"));
+            if(await squealModel.findOne({_id:squealId, CM: "popolare"})){
+                console.log("è gia popolare");
+            }else{
+                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "popolare"}},{new : true});
 
-                    let squealPopolari = await squealModel.find({sender: usernamePopolare.get("sender"), CM: "popolare"});
-                    console.log("squeal popolari:: " + squealPopolari.length);
+                let usernamePopolare = await squealModel.findOne({_id:squealId, CM: "popolare"}, {sender: true});
+                console.log("username popolare::   " + usernamePopolare.get("sender"));
 
-                    if(squealPopolari.length % 3 == 0){
-                        let aggiunta = Math.trunc(2 * (parseInt(arrayCaratteri.characters[0].number)/100));
-                        let totale = parseInt(arrayCaratteri.characters[0].number) + aggiunta;
-                        arrayCaratteri.characters[0].number = String(totale);
-                        await userModel.findOneAndUpdate({username: request.body.username}, {$set: {characters: arrayCaratteri.characters}});
-                    }
+                let squealPopolari = await squealModel.find({sender: usernamePopolare.get("sender"), CM: "popolare"});
+                console.log("squeal popolari:: " + squealPopolari.length);
+
+                if(squealPopolari.length % 3 == 0){
+                    let aggiunta = Math.trunc(2 * (parseInt(arrayCaratteri.characters[0].number)/100));
+                    let totale = parseInt(arrayCaratteri.characters[0].number) + aggiunta;
+                    arrayCaratteri.characters[0].number = String(totale);
+                    await userModel.findOneAndUpdate({username: request.body.username}, {$set: {characters: arrayCaratteri.characters}});
                 }
-
-            }else if(total*0.25 > positive && total*0.25 < negative){
-
-                if(await squealModel.findOne({_id:squealId, CM: "impopolare"})){
-                    console.log("è gia impopolare");
-                }else{
-                    await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "impopolare"}},{new : true});
-
-                    let usernameImpopolare = await squealModel.findOne({_id:squealId, CM: "impopolare"}, {sender: true});
-                    console.log("username impopolare::   " + usernameImpopolare.get("sender"));
-
-                    let squealImpopolari = await squealModel.find({sender: usernameImpopolare.get("sender"), CM: "impopolare"});
-                    console.log("squeal impopolare:: " + squealImpopolari.length);
-
-                    if(squealImpopolari.length % 3 == 0){
-                        let aggiunta = Math.trunc(2 * (parseInt(arrayCaratteri.characters[0].number)/100));
-
-                        let diminuzione = parseInt(arrayCaratteri.characters[0].number) - aggiunta;
-                        arrayCaratteri.characters[0].number = String(diminuzione);
-                        await userModel.findOneAndUpdate({username: request.body.username}, {$set: {characters: arrayCaratteri.characters}});
-                    }
-                }
-
-            }else if(total*0.25 < positive && total*0.25 > negative){
-                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "polarizzante"}},{new : true});
-
             }
+
+        }else if(total*0.25 > positive && total*0.25 < negative){
+
+            if(await squealModel.findOne({_id:squealId, CM: "impopolare"})){
+                console.log("è gia impopolare");
+            }else{
+                await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "impopolare"}},{new : true});
+
+                let usernameImpopolare = await squealModel.findOne({_id:squealId, CM: "impopolare"}, {sender: true});
+                console.log("username impopolare::   " + usernameImpopolare.get("sender"));
+
+                let squealImpopolari = await squealModel.find({sender: usernameImpopolare.get("sender"), CM: "impopolare"});
+                console.log("squeal impopolare:: " + squealImpopolari.length);
+
+                if(squealImpopolari.length % 3 == 0){
+                    let aggiunta = Math.trunc(2 * (parseInt(arrayCaratteri.characters[0].number)/100));
+
+                    let diminuzione = parseInt(arrayCaratteri.characters[0].number) - aggiunta;
+                    arrayCaratteri.characters[0].number = String(diminuzione);
+                    await userModel.findOneAndUpdate({username: request.body.username}, {$set: {characters: arrayCaratteri.characters}});
+                }
+            }
+
+        }else if(total*0.25 < positive && total*0.25 < negative){
+            await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "polarizzante"}},{new : true});
+
         }
+
 
 
         response.json({
@@ -1704,7 +1833,8 @@ app.get("/admin", async (request, response) => {
         if(userAdmin.admin) {
             response.send(userAdmin.admin)
         } else {
-            response.status(403).send('You are not admin');
+            console.log("non sei admin");
+            response.send('You are not admin');
         }
     } catch (error) {
         response.status(500).send(error);
@@ -1972,17 +2102,17 @@ app.put("/add_characters", async (request, response) => {
 
 app.get("/numberReaction", async (request, response) => {
     try {
-        console.log("sono dentro a number reaction");
-        console.log("request.query.squealId number reaction:: " + request.query.squealId);
-        console.log("request.query.type number reaction:: " + request.query.reactionType);
+        //console.log("sono dentro a number reaction");
+        //console.log("request.query.squealId number reaction:: " + request.query.squealId);
+        //console.log("request.query.type number reaction:: " + request.query.reactionType);
 
         let number = await squealModel.findOne({_id: request.query.squealId}, {reactions: true});
-        console.log("number: --- " + number);
+        //console.log("number: --- " + number);
         let index = null;
         if(request.query.reactionType === "angry"){
             index = 0;
         }else if(request.query.reactionType === "dislike"){
-            console.log("è un dislike");
+            //console.log("è un dislike");
             index = 1;
         }else if(request.query.reactionType === "normal"){
             index = 2;
@@ -1994,7 +2124,7 @@ app.get("/numberReaction", async (request, response) => {
             console.log("errore");
             response.send("errore");
         }
-        console.log("lunghezza del vettore id:: " + number.reactions[index].usersIds.length);
+        //console.log("lunghezza del vettore id:: " + number.reactions[index].usersIds.length);
         response.send(String(number.reactions[index].usersIds.length));
     } catch (error) {
         response.status(500).send(error);
