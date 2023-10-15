@@ -44,23 +44,6 @@ function Navbar() {
         loadSqueals();
         navigate('/login');
     }
-    async function checkAdmin(){
-
-        return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
-            .then(response => {
-                console.log("passa qui " )
-                if (response.data === true) {
-                    console.log("entri nel exist ?")
-                    return "isAdmin";
-                } else {
-                    console.log("entri qua");
-                    return "notAdmin";
-                }
-            }).catch(error => {
-                console.log(error.message);
-
-            });
-    }
 
     return (
         <div className='container-fluid pe-none' id='navbar-container'>
@@ -138,6 +121,24 @@ export async function checkPropic() {
         console.log("setted here");
         return await getUserPropic(sessionStorage.getItem("username"));
     }
+}
+
+export async function checkAdmin(){
+
+    return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+        .then(response => {
+            console.log("passa qui " )
+            if (response.data === true) {
+                console.log("entri nel exist ?")
+                return "isAdmin";
+            } else {
+                console.log("entri qua");
+                return "notAdmin";
+            }
+        }).catch(error => {
+            console.log(error.message);
+
+        });
 }
 
 export default Navbar;

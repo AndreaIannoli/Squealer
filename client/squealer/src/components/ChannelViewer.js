@@ -8,6 +8,7 @@ import Spinner from "./Spinner";
 import React from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import BackToTop from "./BackToTop";
+import {checkAdmin} from "./Navbar";
 
 function ChannelViewer() {
     const navigate = useNavigate();
@@ -33,6 +34,11 @@ function ChannelViewer() {
     const [toRemoveMemberResult, setToRemoveMemberResult] = useState('');
     const [writingRestriction, setWritingRestriction] = useState(false);
     const [privacy, setChannelPrivacy] = useState('');
+    const [squealerChannel, setSquealerChannel] = useState('');
+    const [adminUser, setAdminUser] = useState(false);
+    const [channelDescription, setChannelDescription] = useState('');
+    const [channelDesResult, setChannelDesResult] = useState('');
+    const [channelDesError, setChannelDesError] = useState('');
     async function retrieveUserToPromote() {
         setToPromote(await searchUserToPromote());
     }
@@ -56,17 +62,28 @@ function ChannelViewer() {
             const channel = await getChannel();
             setChannelPrivacy(channel.data.access === 'private');
         }
+        async function retrieveSquealerChannel() {
+            const channel = await getChannel();
+            setSquealerChannel(channel.data.channelType === 'squealer');
+            setChannelDescription(channel.data.description);
+        }
+        async function retrieveAdminUser() {
+            setAdminUser((await checkAdmin()) === 'isAdmin');
+        }
+        retrieveAdminUser();
+        retrieveSquealerChannel();
         retrievePrivacy();
         retrieveWritingRestriction();
         retrieveSubscriptionCheck();
         retrieveUserToPromote();
         getOwnersList();
         getWritersList();
-    }, []);
+        resetNav();
+    }, [name]);
 
     async function getChannel() {
         try {
-            return await axios.get(`https://${getServerDomain()}/channels/userChannels/${name}`, {withCredentials: true}).catch((e) => {
+            return await axios.get(`https://${getServerDomain()}/channels/${name}`, {withCredentials: true}).catch((e) => {
                 if (e.data.status === 404) {
                     navigate("/error/404/channel%20not%20found");
                 } else if(e.data.status === 403) {
@@ -259,6 +276,20 @@ function ChannelViewer() {
         })
     }
 
+    async function updateDescription() {
+        await axios.post(`https://${getServerDomain()}/channels/squealerChannels/squealerChannel/description`, {
+            channelName: name,
+            channelDescription: channelDescription
+        }, {withCredentials: true}).then((response) => {
+            setChannelDesError('');
+            setChannelDesResult('Description update');
+        }).catch((error) => {
+            setChannelDesResult('');
+            setChannelDesError(error.response.data);
+            console.log(error);
+        })
+    }
+
     return(
         <div className='container-fluid p-0 bg-dark'>
             <div className='row d-flex justify-content-center p-0 h-100'>
@@ -268,10 +299,10 @@ function ChannelViewer() {
                         <div className='fs-3 text-black text-center mt-5 mt-md-0 me-auto'>
                             {['§', name]}
                         </div>
-                        {owner ?
+                        {owner || adminUser ?
                             <button className='btn btn-primary rounded-5 mt-5 mt-md-0 ' data-bs-toggle="modal" data-bs-target={'[id="' + modalId + '"]'}>Moderate Channel</button>
                             : null}
-                        {owner ?
+                        {owner || adminUser ?
                             <div className="modal fade" tabIndex="-1" aria-labelledby="modalChannelModeration"
                                  aria-hidden="true" data-backdrop="false" id={modalId}>
                                 <div className="modal-dialog modal-dialog-centered">
@@ -282,34 +313,58 @@ function ChannelViewer() {
                                                     aria-label="Close"></button>
                                         </div>
                                         <div className="modal-body">
-                                            <div className='col-12 d-flex justify-content-center mt-2'>
-                                                <div className="fs-6">Public</div>
-                                                <div className="form-check form-switch ms-3 me-2">
-                                                    <input className="form-check-input" type="checkbox" id="privacySwitch" checked={privacy} onChange={event => setPrivacy(event.target.checked)}/>
+                                            {squealerChannel && adminUser ? null :
+                                                <div className='col-12 d-flex justify-content-center mt-2'>
+                                                    <div className="fs-6">Public</div>
+                                                    <div className="form-check form-switch ms-3 me-2">
+                                                        <input className="form-check-input" type="checkbox" id="privacySwitch" checked={privacy} onChange={event => setPrivacy(event.target.checked)}/>
+                                                    </div>
+                                                    <div className="fs-6">Private</div>
+                                                </div>}
+                                            {squealerChannel && adminUser ? null :
+                                                <div className='col-12 d-flex justify-content-center my-3'>
+                                                    <div className="fs-6">free writing</div>
+                                                    <div className="form-check form-switch ms-3 me-2">
+                                                        <input className="form-check-input" type="checkbox" id="writingRestrictionSwitch" checked={writingRestriction} onChange={event => setChannelWritingRestriction(event.target.checked)}/>
+                                                    </div>
+                                                    <div className="fs-6">writing restricted</div>
                                                 </div>
-                                                <div className="fs-6">Private</div>
-                                            </div>
-                                            <div className='col-12 d-flex justify-content-center my-3'>
-                                                <div className="fs-6">free writing</div>
-                                                <div className="form-check form-switch ms-3 me-2">
-                                                    <input className="form-check-input" type="checkbox" id="writingRestrictionSwitch" checked={writingRestriction} onChange={event => setChannelWritingRestriction(event.target.checked)}/>
-                                                </div>
-                                                <div className="fs-6">writing restricted</div>
-                                            </div>
+                                            }
+
                                             <nav>
                                                 <div className="nav nav-tabs" id="nav-tab" role="tablist">
-                                                    <button className="nav-link active" id="nav-owners-tab" data-bs-toggle="tab" data-bs-target="#nav-owners" type="button" role="tab" aria-controls="nav-owners" aria-selected="true">Owners</button>
-                                                    {
-                                                        writingRestriction ?
-                                                            <button className="nav-link" id="nav-writers-tab" data-bs-toggle="tab" data-bs-target="#nav-writers" type="button" role="tab" aria-controls="nav-writers" aria-selected="false">Writers</button>
-                                                            :
-                                                            null
+                                                    <button className="nav-link active" id="nav-description-tab" data-bs-toggle="tab" data-bs-target="#nav-description" type="button" role="tab" aria-controls="nav-members" aria-selected="true">Description</button>
+                                                    {squealerChannel && adminUser ? null :
+                                                        <button className="nav-link" id="nav-owners-tab" data-bs-toggle="tab" data-bs-target="#nav-owners" type="button" role="tab" aria-controls="nav-owners" aria-selected="false">Owners</button>
                                                     }
-                                                    <button className="nav-link" id="nav-members-tab" data-bs-toggle="tab" data-bs-target="#nav-members" type="button" role="tab" aria-controls="nav-members" aria-selected="false">Add member</button>
+                                                    {squealerChannel && adminUser ? null :
+                                                        (
+                                                            writingRestriction ?
+                                                                <button className="nav-link" id="nav-writers-tab" data-bs-toggle="tab" data-bs-target="#nav-writers" type="button" role="tab" aria-controls="nav-writers" aria-selected="false">Writers</button>
+                                                                :
+                                                                null
+                                                        )
+                                                    }
+                                                    {squealerChannel && adminUser ? null :
+                                                        <button className="nav-link" id="nav-members-tab" data-bs-toggle="tab" data-bs-target="#nav-members" type="button" role="tab" aria-controls="nav-members" aria-selected="false">Add member</button>
+                                                    }
                                                 </div>
                                             </nav>
+
                                             <div className="tab-content">
-                                                <div className="tab-pane fade show active" role="tabpanel" id="nav-owners">
+                                                <div className="tab-pane fade show active" role="tabpanel" id="nav-description">
+                                                    <div className='col-12 d-flex flex-column'>
+                                                        <label htmlFor="exampleFormControlTextarea1" className='mt-2'>Channel description</label>
+                                                        <textarea className="form-control bg-transparent rounded-4" id="exampleFormControlTextarea1" rows="3" value={channelDescription} onChange={event => setChannelDescription(event.target.value)}></textarea>
+                                                        <button className='btn btn-primary rounded-5 mt-3' onClick={() => {updateDescription()}}>Update</button>
+                                                        {channelDesError ?
+                                                            <small className="text-danger">{channelDesError}</small>
+                                                            :
+                                                            (channelDesResult ? <small className="text-success">{channelDesResult}</small> : null)
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div className="tab-pane fade" role="tabpanel" id="nav-owners">
                                                     <div className="col-12">
                                                         <label htmlFor="ownerModerationListInput" className="form-label">Promote to owner</label>
                                                         <input className="form-control" list="datalistOptions" id="ownerModerationListInput" placeholder="Type to search User to promote..." value={userToPromote} onChange={event => {setUserToPromote(event.target.value); retrieveUserToPromote()}}/>
@@ -397,7 +452,11 @@ function ChannelViewer() {
                             :
                             null
                         }
-                        {subscribed ? <button className='btn btn-secondary rounded-5 mt-5 mt-md-0 ' onClick={() => {unsubscribe()}}>Unsubscribe</button> : <button className='btn btn-primary rounded-5 mt-5 mt-md-0' onClick={() => {subscribe()}}>Subscribe</button>}
+                        {!squealerChannel ?
+                            (subscribed ? <button className='btn btn-secondary rounded-5 mt-5 mt-md-0 ' onClick={() => {unsubscribe()}}>Unsubscribe</button> : <button className='btn btn-primary rounded-5 mt-5 mt-md-0' onClick={() => {subscribe()}}>Subscribe</button>)
+                            :
+                            null
+                        }
                     </div>
 
                     <div className='col-6 d-flex justify-content-center sticky-top pt-2 pt-md-0'>
@@ -446,6 +505,25 @@ async function loadChannelSqueals(name) {
         return SquealsComponents;
     } catch (error) {
         console.error(error);
+    }
+}
+
+function resetNav() {
+    let navLinks = document.getElementsByClassName('nav-link');
+    for (let i = 0; i < navLinks.length; i++) {
+        navLinks[i].classList.remove('active');
+    }
+    if(document.getElementById('nav-description-tab')) {
+        document.getElementById('nav-description-tab').classList.add('active');
+    }
+    let navTabs = document.getElementsByClassName('tab-pane');
+    for (let i = 0; i < navTabs.length; i++) {
+        navTabs[i].classList.remove('show');
+        navTabs[i].classList.remove('active');
+    }
+    if(document.getElementById('nav-description')) {
+        document.getElementById('nav-description').classList.add('show');
+        document.getElementById('nav-description').classList.add('active');
     }
 }
 

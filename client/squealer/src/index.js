@@ -33,6 +33,7 @@ import ChannelCreation from "./pages/ChannelCreation";
 import Error from "./pages/Error";
 import Notifications from "./pages/Notifications";
 import Admin from "./pages/Admin";
+import SquealerChannelCreation from "./pages/SquealerChannelCreation";
 
 export const router = createBrowserRouter([
     {
@@ -74,6 +75,10 @@ export const router = createBrowserRouter([
     {
         path: "/channel_creation",
         element: <ChannelCreation />,
+    },
+    {
+        path: "/squealer_channel_creation",
+        element: <SquealerChannelCreation />,
     },
     {
         path: "/error/:code/:text",

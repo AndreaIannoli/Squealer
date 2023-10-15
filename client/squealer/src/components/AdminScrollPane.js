@@ -109,12 +109,16 @@ function AdminScrollPane() {
                         </div>
 
                         <div className='row'>
-                            <div className='col-12'>
-                                <select id="filter"  >Filtra per
-                                    <option defaultChecked={true} value="Sender">Sender</option>
-                                    <option value="Receiver">Receiver</option>
-                                    <option value="Date">Date</option>
-                                </select>
+                            <div className='col-12 d-flex flex-column gap-3'>
+                                <button className='btn btn-primary rounded-5 col-12 mb-2' onClick={() => {navigate('/squealer_channel_creation')}}>Create a SQUEALER channel</button>
+                                <div className='col-12 d-flex align-items-center'>
+                                    <div className=''>Filtra per:</div>
+                                    <select id="filter">
+                                        <option defaultChecked={true} value="Sender">Sender</option>
+                                        <option value="Receiver">Receiver</option>
+                                        <option value="Date">Date</option>
+                                    </select>
+                                </div>
                             </div>
                             <div>
                                 {

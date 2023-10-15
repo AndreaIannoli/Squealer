@@ -158,6 +158,10 @@ const channelSchema = new mongoose.Schema({
     writingRestriction: {
         type: Boolean,
         default: false
+    },
+    description: {
+        type: String,
+        default: ''
     }
 });
 
