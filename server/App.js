@@ -24,10 +24,97 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const {json} = require("express/lib/response");
 
+const Parser = require('rss-parser');
+const parser = new Parser();
+const axios = require('axios');
+const {Buffer} = require("buffer");
+const parseString = require('xml2js').parseString;
+
+
 mongoose.connect('mongodb://127.0.0.1:27017/Squealer');
 
 // Imposta l'URL dell'API di destinazione
 const apiDestinazione = 'URL_Dell_API_Di_Destinazione';
+
+
+
+async function getRss(){
+    return await axios.get(`https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml`)
+        .then((response) => {
+            const feed = response.data;
+            //console.log(feed);
+            const xmlData = response.data;
+            // Converti l'XML in JSON
+            parseString(xmlData, async (error, result) => {
+                if (error) {
+                    console.error('Errore nella conversione da XML a JSON', error);
+                } else {
+                    const jsonData = result; // Contiene il feed RSS convertito in oggetti JSON
+                    // Accedi ai diversi elementi del feed RSS
+                    const rss = jsonData.rss.channel[0]; // Canale RSS
+                    // controllo il primo item se è esistente lo aggiungo alla lista e lo metto nel db
+                    // altrimenti passo avanti
+                    console.log(rss.item.length)
+                    const nycTimes = await userModel.findOne({username: 'NYTimes'});
+
+                    for (let index = 0; index < rss.item.length; index++) {
+
+                        param1 = rss.item[index].link;
+                        param2 = rss.item[index].title;
+                        param3= rss.item[index].description;
+                        console.log(param1 + " " + param2 + " " + param3 )
+                        const existSqueal = await squealModel.findOne({linkRss: param1});
+                        console.log(existSqueal + "cosa c'è")
+                        if(!existSqueal) {
+                            const reactionAngry = new reactionModel({
+                                name: "angry",
+                            })
+                            await reactionAngry.save();
+                            const reactionDislike = new reactionModel({
+                                name: "dislike",
+                            })
+                            await reactionDislike.save();
+                            const reactionNormal = new reactionModel({
+                                name: "normal",
+                            })
+                            await reactionNormal.save();
+                            const reactionLike = new reactionModel({
+                                name: "like",
+                            })
+                            await reactionLike.save();
+                            const reactionHeart = new reactionModel({
+                                name: "heart",
+                            })
+                            await reactionHeart.save();
+                            const squeal = new squealModel({
+                                sender: "NYTimes",
+                                text: param2 + '\n' + param3,
+                                date: new Date(),
+                                resqueal: "",
+                                reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
+                                CM: "",
+                                linkRss: param1
+                            });
+                            const squealSaved = await squeal.save();
+                            console.log(squealSaved + "computer")
+                            await inboxModel.findOneAndUpdate({receiver: '§NEWS'}, {$push: {squealsIds: squealSaved._id.toHexString()}}, {new: true});
+                        }
+
+                    }
+                }
+            });
+        })
+        .catch((error) => {
+            console.error('Errore nel recupero del feed RSS', error);
+        });
+}
+
+cronJob.schedule('*/2 * * * *', () => {
+    //getRss();
+});
+
+
+
 
 // Definisci la funzione cron asincrona
 const eseguiCronJob = async () => {
@@ -35,26 +122,11 @@ const eseguiCronJob = async () => {
     try {
         let immagineBase64 = '';
 
-
         const idImmagineCasuale = Math.floor(Math.random() * 1000);
         const larghezza = 200;
         const altezza = 200;
 
         const url = `https://picsum.photos/${larghezza}/${altezza}?random=${idImmagineCasuale}`;
-
-
-        const img = new Image();
-        let base64data;
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            const context = canvas.getContext('2d');
-            context.drawImage(img, 0, 0, img.width, img.height);
-
-            // Converti il canvas in base64
-            base64data = canvas.toDataURL('image/png').split(',')[1];
-            console.log(base64data);
 
 
         const reactionAngry = new reactionModel({
@@ -82,7 +154,7 @@ const eseguiCronJob = async () => {
             sender: "jorge",
             text: "questo messaggio è generato automaticamente",
             //geolocation: "",
-            img: 'data:image/png;base64,'+ base64data ,
+            img: url,
             date: new Date(),
             reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
         });
@@ -109,15 +181,12 @@ const eseguiCronJob = async () => {
             await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
         }*/
 
-
-
     } catch (errore) {
         console.error('Errore durante l\'invio dell\'immagine:', errore.message);
     }
 };
 
-// Definisci il cronjob per eseguire ogni 10 secondi
-cronJob.schedule('*/10 * * * * *', eseguiCronJob);
+cronJob.schedule('0 5 * * * *', eseguiCronJob);
 
 
 cronJob.schedule('0 0 * * *', async () => {

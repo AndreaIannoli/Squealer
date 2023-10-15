@@ -108,6 +108,10 @@ const squealSchema = new mongoose.Schema({
     CM:{
         type: String,
         default: "",
+    },
+    linkRss:{
+        type: [String],
+        default: "",
     }
 });
 
