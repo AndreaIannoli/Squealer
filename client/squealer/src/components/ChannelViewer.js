@@ -12,10 +12,23 @@ import {checkAdmin} from "./Navbar";
 
 function ChannelViewer() {
     const navigate = useNavigate();
+    let { name } = useParams();
+    async function getChannel() {
+        try {
+            return await axios.get(`https://${getServerDomain()}/channels/${name}`, {withCredentials: true}).catch((e) => {
+                if (e.response.status === 404) {
+                    navigate("/error/404/channel%20not%20found");
+                } else if(e.response.status === 403) {
+                    navigate("/error/404/you%20are%20not%20allowed%20to%20enter%20this%20channel");
+                }
+            })
+        } catch (e) {
+            console.error(e);
+        }
+    }
     const [squeals, setSqueals] = useState(null);
     const [owner, setOwner] = useState(null);
     const [subscribed, setSubscribed] = useState(null);
-    let { name } = useParams();
     const modalId = useId();
     const [toPromote, setToPromote] = useState([]);
     const [userToPromote, setUserToPromote] = useState('');
@@ -43,58 +56,46 @@ function ChannelViewer() {
         setToPromote(await searchUserToPromote());
     }
     useEffect( () => {
-        async function retrieveSqueals() {
-            setSqueals(await loadChannelSqueals(name));
-        }
-        retrieveSqueals();
-        async function retrieveOwnerCheck() {
-            setOwner(await isOwner());
-        }
-        retrieveOwnerCheck();
-        async function retrieveSubscriptionCheck() {
-            setSubscribed(await isSubscribed());
-        }
-        async function retrieveWritingRestriction() {
-            const channel = await getChannel();
-            setWritingRestriction(channel.data.writingRestriction);
-        }
-        async function retrievePrivacy() {
-            const channel = await getChannel();
-            setChannelPrivacy(channel.data.access === 'private');
-        }
-        async function retrieveSquealerChannel() {
-            const channel = await getChannel();
-            setSquealerChannel(channel.data.channelType === 'squealer');
-            setChannelDescription(channel.data.description);
-        }
-        async function retrieveAdminUser() {
-            setAdminUser((await checkAdmin()) === 'isAdmin');
-        }
-        retrieveAdminUser();
-        retrieveSquealerChannel();
-        retrievePrivacy();
-        retrieveWritingRestriction();
-        retrieveSubscriptionCheck();
-        retrieveUserToPromote();
-        getOwnersList();
-        getWritersList();
-        resetNav();
+        async function checkChannel() {await getChannel();}
+        checkChannel().then((r) => {
+            async function retrieveSqueals() {
+                setSqueals(await loadChannelSqueals(name));
+            }
+            retrieveSqueals();
+            async function retrieveOwnerCheck() {
+                setOwner(await isOwner());
+            }
+            retrieveOwnerCheck();
+            async function retrieveSubscriptionCheck() {
+                setSubscribed(await isSubscribed());
+            }
+            async function retrieveWritingRestriction() {
+                const channel = await getChannel();
+                setWritingRestriction(channel.data.writingRestriction);
+            }
+            async function retrievePrivacy() {
+                const channel = await getChannel();
+                setChannelPrivacy(channel.data.access === 'private');
+            }
+            async function retrieveSquealerChannel() {
+                const channel = await getChannel();
+                setSquealerChannel(channel.data.channelType === 'squealer');
+                setChannelDescription(channel.data.description);
+            }
+            async function retrieveAdminUser() {
+                setAdminUser((await checkAdmin()) === 'isAdmin');
+            }
+            retrieveAdminUser();
+            retrieveSquealerChannel();
+            retrievePrivacy();
+            retrieveWritingRestriction();
+            retrieveSubscriptionCheck();
+            retrieveUserToPromote();
+            getOwnersList();
+            getWritersList();
+            resetNav();
+        });
     }, [name]);
-
-    async function getChannel() {
-        try {
-            return await axios.get(`https://${getServerDomain()}/channels/${name}`, {withCredentials: true}).catch((e) => {
-                if (e.data.status === 404) {
-                    navigate("/error/404/channel%20not%20found");
-                } else if(e.data.status === 403) {
-                    navigate("/error/404/you%20are%20not%20allowed%20to%20enter%20this%20channel");
-                }
-            })
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    getChannel();
 
     async function isOwner(){
         const channel = await getChannel();
@@ -138,7 +139,7 @@ function ChannelViewer() {
     }
 
     async function searchUserToPromote() {
-        const response = await axios.get(`https://${getServerDomain()}/search_user?value=${userToPromote}`, {withCredentials: true});
+        const response = await axios.get(`https://${getServerDomain()}/users/user/search_user?value=${userToPromote}`, {withCredentials: true});
         const usernameOptions = [];
         for(let username of response.data) {
             usernameOptions.push(<option value={username.slice(1)}/>);
@@ -479,7 +480,7 @@ function ChannelViewer() {
 
 async function loadChannelSqueals(name) {
     try {
-        const response = await axios.get(`https://${getServerDomain()}/channel_squeals?name=${name}`, { withCredentials: true });
+        const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/channel_squeals?name=${name}`, { withCredentials: true });
         const SquealsComponents = [];
 
         for (let entry of response.data) {
@@ -498,6 +499,7 @@ async function loadChannelSqueals(name) {
                     id={entry.id}
                     date={entry.date}
                     resqueal={entry.resqueal}
+                    CM={entry.CM}
                 />
             );
         }

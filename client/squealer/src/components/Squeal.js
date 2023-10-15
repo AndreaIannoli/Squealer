@@ -18,7 +18,7 @@ import Spinner from "./Spinner";
 
 
 
-function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
+function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}) {
 
     let [admin, setAdmin] = useState();
 
@@ -45,7 +45,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
 
     async function getSqueal() {
         try {
-            const response = await axios.get(`https://${getServerDomain()}/squeal?squealId=${resqueal}`, {withCredentials: true});
+            const response = await axios.get(`https://${getServerDomain()}/squeals?squealId=${resqueal}`, {withCredentials: true});
             return(response);
         } catch (error) {
             console.error(error);
@@ -103,7 +103,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
         }
     }
     async function checkAdmin(){
-        return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+        return await axios.get(`https://${getServerDomain()}/users/user/admin`, {withCredentials: true})
             .then(response => {
                 console.log("passa qui " )
                 if (response.data === true) {
@@ -180,7 +180,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
             }
         }
 
-        axios.put(`https://${getServerDomain()}/add_reaction`, {
+        axios.put(`https://${getServerDomain()}/users/user/reactions/add_reaction`, {
             reactionType: tipo,
             username: user,
             squealId: id
@@ -240,6 +240,16 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
     <div className='container-fluid'>
         <div className='row rounded-4 bg-white p-2 ms-3 me-3'>
             <div className='col-12 d-flex'>
+
+                {CM === "popolare" ? (
+                    <i className="bi bi-fire"></i>
+                ) : CM == "impopolare" ? (
+                    <i className="bi bi-graph-down-arrow"></i>
+                ) : CM === "polarizzante" ? (
+                    <i className="bi bi-arrows-angle-contract"></i>
+
+                ) : (<i></i>)}
+
                 <div className='fs-6'>{from !== undefined ? ['from: ', <Tag tagText={from}/>] : null}</div>
                 <div className='fs-6 ms-auto'>{formatDate(date)}</div>
             </div>
@@ -247,11 +257,14 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
             <div className='col-12'>
                 {resquealCheck ? resquealCheck : null}
             </div>
+
             <div className='col-12'>
                 <div className='row'>
                     <div className='col-2 col-md-1 pe-0 my-2'><img src={propic} className='w-100' id='propic'/></div>
                     <div className='col-10 col-md-11 d-flex align-items-center'>
                         <div className='fs-6 fw-semibold text-black'>{username}</div>
+
+
                     </div>
                 </div>
             </div>
@@ -260,6 +273,8 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal}) {
             </div>
             <div className='col-12 d-flex'>
                 <button className='btn postbox-btn me-auto' data-bs-toggle="modal" data-bs-target={'#' + 'resquealModal'+ id}><i className="bi bi-chat-left-quote-fill"></i></button>
+
+
                 <div className='reactions' className='d-flex justify-content-center align-items-center gap-2'>
                     <i className="bi bi-emoji-angry reactionIcon fs-5" id={"angry" + id} onClick={() => onLikeButtonClick("angry")}>
                         <span id={"spanangry" + id} className="position-relative top-100 start-0 translate-middle badge rounded-pill bg-danger">
@@ -350,7 +365,7 @@ export function checkForTags(text) {
 }
 
 async function giveNumberReactions(id, tipo){
-      return await axios.get(`https://${getServerDomain()}/numberReaction?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
+      return await axios.get(`https://${getServerDomain()}/squeals/squeal/reactions/?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
         .then(response => {
                 //console.log("response data:: " + response.data);
                 //console.log("span" + tipo);

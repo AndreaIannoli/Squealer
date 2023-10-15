@@ -47,7 +47,7 @@ function AdminScrollPane() {
 
     async function getAdmin() {
         try {
-            return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true}).catch((e) => {
+            return await axios.get(`https://${getServerDomain()}/users/user/admin`, {withCredentials: true}).catch((e) => {
                 if (e.response.status === 404) {
                     navigate("/error/404/channel%20not%20found");
                 } else if(e.response.status === 403) {
@@ -65,7 +65,7 @@ function AdminScrollPane() {
     async function loadDateSqueals(value ) {
         try{
 
-            const response = await axios.get(`https://${getServerDomain()}/search_date?value=${value}`, {withCredentials: true});
+            const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/search_date?value=${value}`, {withCredentials: true});
             const SquealsReceiver = [];
 
             for (let entry of response.data) {
@@ -165,7 +165,7 @@ export async function loadSqueals() {
 
 async function loadAllSqueals() {
     try {
-        const response = await axios.get(`https://${getServerDomain()}/merged_squeals`, { withCredentials: true });
+        const response = await axios.get(`https://${getServerDomain()}/squeals/squealmerged_squeals`, { withCredentials: true });
         const SquealsComponents = [];
 
         for (let entry of response.data) {
@@ -200,7 +200,7 @@ async function filtringSelectedBar(){
 
 async function loadFilteredSqueals() {
     try{
-        const response = await axios.get(`https://${getServerDomain()}/search_sender?value=${document.getElementById("filterSearch").value}`, {withCredentials: true});
+        const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/search_sender?value=${document.getElementById("filterSearch").value}`, {withCredentials: true});
         const SquealsSenders = [];
 
         for (let entry of response.data) {
@@ -229,7 +229,7 @@ async function loadFilteredSqueals() {
 }
 async function loadReceiverSqueals() {
     try{
-        const response = await axios.get(`https://${getServerDomain()}/search_receiver?value=${document.getElementById("filterReceiverSearch").value}`, {withCredentials: true});
+        const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/search_receiver?value=${document.getElementById("filterReceiverSearch").value}`, {withCredentials: true});
         const SquealsReceiver = [];
 
         for (let entry of response.data) {

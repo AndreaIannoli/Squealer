@@ -46,7 +46,7 @@ function ReSquealModal({resquealModalId, squealBody, username, propic, from, dat
 
             if( prefix ){
                 if( prefix === '@' ) {
-                    fetch('https://localhost:3005/search_user?value=' + value)
+                    fetch('https://localhost:3005/users/user/search_user?value=' + value)
                         .then(RES => RES.json())
                         .then(function(newWhitelist){
                             tagifyText.whitelist = newWhitelist // update whitelist Array in-place
@@ -54,7 +54,7 @@ function ReSquealModal({resquealModalId, squealBody, username, propic, from, dat
                         })
                 }
                 if( prefix === '§' )
-                    fetch('https://localhost:3005/search_channel?value=' + value)
+                    fetch('https://localhost:3005/channels/channel/search_channel?value=' + value)
                         .then(RES => RES.json())
                         .then(function(newWhitelist){
                             tagifyText.whitelist = newWhitelist // update whitelist Array in-place
@@ -128,7 +128,7 @@ function postResqueal(resquealBody, from, sender, squealId) {
     }
     console.log(receiver);
 
-    axios.post(`https://${getServerDomain()}/post_resqueal`, {
+    axios.post(`https://${getServerDomain()}/squeals/squeal/post_resqueal`, {
         text: resquealBody,
         receivers: [receiver],
         resqueal: squealId

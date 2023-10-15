@@ -9,13 +9,17 @@ import React from "react";
 import {useState} from "react";
 import Spinner from "./Spinner";
 import BackToTop from "./BackToTop";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 function ScrollPane() {
+    const navigate = useNavigate();
     const [squeals, setSqueals] = useState(null);
     const [key, forceUpdate] = useState(0);
     const logged = document.cookie.includes('loggedStatus');
     const page = window.location.pathname;
+    if(page !== '/' && !logged) {
+        navigate('/');
+    }
     useEffect(() => {
         async function retrieveSqueals() {
             setSqueals(await loadSqueals());
@@ -73,14 +77,16 @@ export async function loadSqueals() {
         return await loadChannelsSqueals();
     } else if (page === '/') {
         return await loadPublicSqueals();
-    } else {
+    } else if (page === '/messages') {
         return await loadPrivateSqueals();
+    } else if(page === '/explore') {
+        return await loadExploreSqueals();
     }
 }
 
-async function loadPublicSqueals() {
+async function loadExploreSqueals() {
     try {
-        const response = await axios.get(`https://${getServerDomain()}/channels_squeals`, { withCredentials: true });
+        const response = await axios.get(`https://${getServerDomain()}/squeals/explore_squeals`, { withCredentials: true });
         const SquealsComponents = [];
 
         for (let entry of response.data) {
@@ -98,6 +104,38 @@ async function loadPublicSqueals() {
                     id={entry.id}
                     date={entry.date}
                     resqueal={entry.resqueal}
+                    popolarita={entry.popolarita}
+                />
+            );
+        }
+
+        return SquealsComponents;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function loadPublicSqueals() {
+    try {
+        const response = await axios.get(`https://${getServerDomain()}/squeals/unlogged_squeals`, { withCredentials: true });
+        const SquealsComponents = [];
+
+        for (let entry of response.data) {
+            const propic = await getUserPropic(entry.sender);
+
+            SquealsComponents.push(
+                <Squeal
+                    key={entry.id}
+                    from={entry.from}
+                    propic={propic}
+                    username={entry.sender}
+                    geo={entry.geolocation}
+                    img={entry.img}
+                    text={entry.text}
+                    id={entry.id}
+                    date={entry.date}
+                    resqueal={entry.resqueal}
+                    popolarita={entry.popolarita}
                 />
             );
         }
@@ -111,7 +149,7 @@ async function loadPublicSqueals() {
 
 async function loadPrivateSqueals() {
     try {
-        const response = await axios.get(`https://${getServerDomain()}/private_squeals`, { withCredentials: true });
+        const response = await axios.get(`https://${getServerDomain()}/squeals/private_squeals`, { withCredentials: true });
         const SquealsComponents = [];
 
         for (let entry of response.data) {
@@ -143,7 +181,7 @@ async function loadPrivateSqueals() {
 
 async function loadChannelsSqueals() {
     try {
-        const response = await axios.get(`https://${getServerDomain()}/channels_squeals`, { withCredentials: true });
+        const response = await axios.get(`https://${getServerDomain()}/channels/channels_squeals`, { withCredentials: true });
         const SquealsComponents = [];
 
         for (let entry of response.data) {
@@ -160,6 +198,7 @@ async function loadChannelsSqueals() {
                     id={entry.id}
                     date={entry.date}
                     resqueal={entry.resqueal}
+                    CM={entry.CM}
                 />
             );
         }

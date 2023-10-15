@@ -10,6 +10,8 @@ import Spinner from "./Spinner";
 import React from "react";
 import {useLocation, useParams} from "react-router-dom";
 import BackToTop from "./BackToTop";
+import ChangePasswordModal from "./ChangePasswordModal";
+
 
 function ProfileViewer() {
     const [propic, setPropic] = useState(null);
@@ -39,7 +41,7 @@ function ProfileViewer() {
 
     async function checkBlock(username){
         console.log(username);
-        return await axios.get(`https://${getServerDomain()}/existence_block?username=${username}`)
+        return await axios.get(`https://${getServerDomain()}/users/user/existence_block?username=${username}`)
             .then(response => {
                 //console.log("passa qui " + sessionStorage.getItem('username') )
                 if (response.data === "yes") {
@@ -63,6 +65,13 @@ function ProfileViewer() {
                 <div className='col-12 d-flex flex-column align-items-center p-0' id='scrollpaneProfileV'>
                     <div id="anchorRelatedSqueals"/>
                     <div className='col-11 mx-3 mb-3 pt-5 d-flex flex-column justify-content-center align-items-center bg-white rounded-bottom-5'>
+                        {
+                            sessionStorage.getItem('username')=== username ? (
+                                <div id="changePassword" >
+                                    <button id="btnChangePassword" data-bs-toggle="modal" className="btn btn-primary btn-circle rounded-5" data-bs-target={'#' + 'cambioPassword'}>Password Change</button>
+                                </div>
+                            ) :null
+                        }
                         <div className='col-3 z-2 mt-3 mt-md-0' id='propicContainerProfileV'>
                             {propic ? (
                                 <img className='image w-100 rounded-circle shadow' src={propic} id='propicProfileV'/>
@@ -89,6 +98,7 @@ function ProfileViewer() {
 
                         }
                     </div>
+                    <ChangePasswordModal changePassword={'cambioPassword'} username={username}/>
                     <div className='col-6 d-flex justify-content-center sticky-top pt-2 pt-md-0'>
                         <div className='bg-dark rounded-bottom-5 mt-5 mt-md-0 px-3 text-center opacity-75'>
                             Recent squeals
@@ -107,7 +117,7 @@ function ProfileViewer() {
 }
 
 async function loadRelatedSqueals(username) {
-    return await axios.get(`https://${getServerDomain()}/related_squeals?username=${username}`, {withCredentials: true})
+    return await axios.get(`https://${getServerDomain()}/squeals/squeal/related_squeals?username=${username}`, {withCredentials: true})
         .then(async function (response) {
             let SquealsComponents = [];
             let keyCounter = 0;
@@ -116,7 +126,7 @@ async function loadRelatedSqueals(username) {
                                                propic={await getUserPropic(entry.sender)}
                                                username={entry.sender} geo={entry.geolocation}
                                                img={entry.img} text={entry.text} id={entry.id}
-                                               date={entry.date} resqueal={entry.resqueal}/>);
+                                               date={entry.date} resqueal={entry.resqueal} CM={entry.CM}/>);
                 keyCounter++;
             }
 
@@ -129,7 +139,7 @@ async function loadRelatedSqueals(username) {
 
 async function checkAdmin(){
 
-    return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+    return await axios.get(`https://${getServerDomain()}/users/user/admin`, {withCredentials: true})
         .then(response => {
             console.log("passa qui " )
             if (response.data === true) {
@@ -146,7 +156,7 @@ async function checkAdmin(){
 }
 async function blockUser(username){
 
-    return await axios.put(`https://${getServerDomain()}/block_user`, {
+    return await axios.put(`https://${getServerDomain()}/users/user/block_user`, {
         username: username
     },{ withCredentials: true })
         .then(response => {
@@ -161,7 +171,7 @@ async function blockUser(username){
 }
 async function unBlockUser(username){
 
-    return await axios.put(`https://${getServerDomain()}/unblock_user`, {
+    return await axios.put(`https://${getServerDomain()}/users/user/unblock_user`, {
         username: username
     },{ withCredentials: true })
         .then(response => {
@@ -177,7 +187,7 @@ async function unBlockUser(username){
 
 async function addCharacters(username,values){
 
-    return await axios.put(`https://${getServerDomain()}/add_characters`, {
+    return await axios.put(`https://${getServerDomain()}/users/user/charcters/add_characters`, {
         username: username,
         number: values
 

@@ -17,6 +17,19 @@
 i{
     margin-left: 25px;
 }
+
+.bi-fire{
+    color: red;
+}
+
+.bi-graph-down-arrow{
+    color: blue;
+}
+
+.bi-arrows-angle-contract{
+    color: green;
+}
+
 .position-relative{
     font-size: 10px;
 }

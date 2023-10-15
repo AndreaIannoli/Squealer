@@ -26,7 +26,7 @@ function ChannelCreator() {
             // show loading animation and hide the suggestions dropdown
             tagifyReceivers.loading(true).dropdown.hide()
 
-            fetch('https://localhost:3005/search_user?value=' + value, {signal:controller.signal})
+            fetch('https://localhost:3005/users/user/search_user?value=' + value, {signal:controller.signal})
                 .then(RES => RES.json())
                 .then(function(newWhitelist){
                     const username = '@' + sessionStorage.getItem('username');

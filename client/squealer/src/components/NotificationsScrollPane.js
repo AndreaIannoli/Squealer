@@ -11,11 +11,11 @@ import BackToTop from "./BackToTop";
 function NotificationsScrollPane() {
     const [notifications, setNotifications] = useState(null);
     const [key, forceUpdate] = useState(0);
+
     useEffect(() => {
         async function retrieveNotifications() {
             setNotifications(await loadNotifications());
         }
-
         retrieveNotifications();
     }, [key])
 
@@ -54,7 +54,6 @@ function NotificationsScrollPane() {
                 console.log(error.message);
             });
             forceUpdate(currentKey => currentKey + 1);
-            console.log('called');
         } catch (error) {
             console.log(error);
         }

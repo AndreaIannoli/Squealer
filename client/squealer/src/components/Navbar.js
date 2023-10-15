@@ -125,7 +125,7 @@ export async function checkPropic() {
 
 export async function checkAdmin(){
 
-    return await axios.get(`https://${getServerDomain()}/admin`, {withCredentials: true})
+    return await axios.get(`https://${getServerDomain()}/users/user/admin`, {withCredentials: true})
         .then(response => {
             console.log("passa qui " )
             if (response.data === true) {

@@ -39,7 +39,7 @@ function Registration() {
             reader.readAsDataURL(selectedImage);
             reader.onload = async function (event) {
                 const encode_img = event.target.result;
-                axios.post(`https://${getServerDomain()}/register_user`, {
+                axios.post(`https://${getServerDomain()}/users/user`, {
                     "name": document.getElementById('floatingName').value,
                     "surname": document.getElementById('floatingSurname').value,
                     "email": document.getElementById('floatingEmail').value,
@@ -56,7 +56,7 @@ function Registration() {
             };
             event.preventDefault();
         } else {
-            axios.post(`https://${getServerDomain()}/register_user`, {
+            axios.post(`https://${getServerDomain()}/users/user`, {
                 "name": document.getElementById('floatingName').value,
                 "surname": document.getElementById('floatingSurname').value,
                 "email": document.getElementById('floatingEmail').value,
@@ -137,7 +137,7 @@ function Registration() {
 
 async function checkUsername() {
     const toCheck = document.getElementById("floatingUsername").value;
-    return await axios.get(`https://${getServerDomain()}/existence_user?username=${toCheck}`)
+    return await axios.get(`https://${getServerDomain()}/users/user/existence_user?username=${toCheck}`)
         .then(response => {
             if (response.data === "exist") {
                 document.getElementById('floatingUsername').classList.remove('is-valid');

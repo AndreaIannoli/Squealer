@@ -80,7 +80,7 @@ function PostBox({update}) {
 
             if( prefix ){
                 if( prefix === '@' ) {
-                    fetch('https://localhost:3005/search_user?value=' + value)
+                    fetch('https://localhost:3005/users/user/search_user?value=' + value)
                         .then(RES => RES.json())
                         .then(function(newWhitelist){
                             tagifyText.whitelist = newWhitelist // update whitelist Array in-place
@@ -88,7 +88,7 @@ function PostBox({update}) {
                         })
                 }
                 if( prefix === '§' )
-                    fetch('https://localhost:3005/search_channel?value=' + value)
+                    fetch('https://localhost:3005/channels/channel/search_channel?value=' + value)
                         .then(RES => RES.json())
                         .then(function(newWhitelist){
                             tagifyText.whitelist = newWhitelist // update whitelist Array in-place
@@ -111,7 +111,7 @@ function PostBox({update}) {
 
                 console.log("username::   " + sessionStorage.getItem("username"));
 
-                axios.get(`https://${getServerDomain()}/caratteriGiornalieri?username=${sessionStorage.getItem("username")}`)
+                axios.get(`https://${getServerDomain()}/users/user/characters/daily?username=${sessionStorage.getItem("username")}`)
                     .then(response => {
                         // Gestisci la risposta
                         caratteri = response.data;
@@ -170,7 +170,7 @@ function PostBox({update}) {
         const receivers = document.getElementById('receivers').value;
 
         if(postType === "img") {
-            axios.post(`https://${getServerDomain()}/post_squeal`, {
+            axios.post(`https://${getServerDomain()}/squeals/squeal/post_squeal`, {
                 img: squealBody,
                 receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
@@ -189,7 +189,7 @@ function PostBox({update}) {
                     console.log(error);
                 });
         } else if(postType === "geo") {
-            axios.post(`https://${getServerDomain()}/post_squeal`, {
+            axios.post(`https://${getServerDomain()}/squeals/squeal/post_squeal`, {
                 geolocation: [squealBody.lat.toString(), squealBody.lng.toString()],
                 receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
@@ -208,7 +208,7 @@ function PostBox({update}) {
                     console.log(error);
                 });
         } else {
-            axios.post(`https://${getServerDomain()}/post_squeal`, {
+            axios.post(`https://${getServerDomain()}/squeals/squeal/post_squeal`, {
                 text: squealBody,
                 receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})

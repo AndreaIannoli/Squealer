@@ -11,7 +11,7 @@ function Login() {
         if(!(await checkExistence())){
             return;
         }
-        axios.post(`https://${getServerDomain()}/authenticate_user`, {
+        axios.post(`https://${getServerDomain()}/users/user/authenticate_user`, {
             "username": document.getElementById("floatingUsername").value,
             "password": document.getElementById("floatingPassword").value
         }, { withCredentials: true }).then(response => {
@@ -67,7 +67,7 @@ function Login() {
 
 async function checkExistence() {
     const toCheck = document.getElementById("floatingUsername").value;
-    return await axios.get(`https://${getServerDomain()}/existence_user?username=${toCheck}`)
+    return await axios.get(`https://${getServerDomain()}/users/user/existence_user?username=${toCheck}`)
         .then(response => {
             console.log(document.getElementById("floatingUsername").value);
             console.log(response.data);

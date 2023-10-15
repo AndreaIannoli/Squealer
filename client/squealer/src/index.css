@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
 
+iframe
+{
+  display: none;
+}
+
 :root {
   /** PRIMARY */
   --color-primary: #1DA1F2;

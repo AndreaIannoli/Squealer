@@ -73,7 +73,6 @@ async function checkChannelNews() {
                 email: 'nytnews@nytimes.com',
                 username: 'NYTimes',
                 password: 'admin',
-                characters: '0',
                 propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fhelp.nytimes.com%2Fhc%2Fen-us%2Farticles%2F115014891408-Obtaining-and-using-Times-content&psig=AOvVaw2XDKBNB4cSI6wtVgA6SZkB&ust=1697469040010000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCPCCg4ur-IEDFQAAAAAdAAAAABAJ'
             });
             await user.save();
@@ -130,7 +129,6 @@ async function checkChannelIMG() {
                 email: 'lorem@picsum.com',
                 username: 'LoremPicsum',
                 password: 'admin',
-                characters: '0',
                 propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fpicsum.photos%2F&psig=AOvVaw3_pg0qugMb6aIuf8_s8hil&ust=1697470177425000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCODA-qmv-IEDFQAAAAAdAAAAABAE'
             });
             await user.save();
@@ -169,7 +167,6 @@ async function checkChannelWeather() {
                 email: 'open@weather.com',
                 username: 'OpenWeather',
                 password: 'admin',
-                characters: '0',
                 propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fopenweathermap.org%2Fweather-conditions&psig=AOvVaw0-wTVhWYVZIA_Mw0KemgZb&ust=1697471809930000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCODr67O1-IEDFQAAAAAdAAAAABAF'
             });
             await user.save();
@@ -264,7 +261,7 @@ async function getRss(){
 }
 
 cronJob.schedule('*/2 * * * *', () => {
-    //getRss();
+    getRss();
 });
 
 
@@ -305,8 +302,8 @@ const eseguiCronJob = async () => {
         })
         await reactionHeart.save();
         const squeal = new squealModel({
-            sender: "jorge",
-            text: "questo messaggio è generato automaticamente",
+            sender: "LoremPicsum",
+            text: "",
             //geolocation: "",
             img: url,
             date: new Date(),
@@ -318,14 +315,14 @@ const eseguiCronJob = async () => {
         //const receiversArr0 = ;
 
         await inboxModel.findOneAndUpdate(
-            {receiver: "§prova immagini"}, // Query condition to find the document
+            {receiver: "§RANDOMIMG"}, // Query condition to find the document
             {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
             {new: true}, // Option to return the updated document
         );
         const notification = new notificationModel({
-            title: "New Squeal from " + " - ",
-            text: "Check out the new Squeal from {*tag*{@" + " - " + "}*tag*} in {*tag*{" + "§prova immagini" + "}*tag*}",
-            sender: "jorge",
+            title: "New Squeal from " + " LoremPicsum ",
+            text: "Check out the new Squeal from {*tag*{@" + " LoremPicsum " + "}*tag*} in {*tag*{" + "§RANDOMIMG" + "}*tag*}",
+            sender: "LoremPicsum",
             date: new Date(),
         });
         await notification.save();
@@ -340,7 +337,92 @@ const eseguiCronJob = async () => {
     }
 };
 
-cronJob.schedule('0 5 * * * *', eseguiCronJob);
+cronJob.schedule('10 * * * * *', eseguiCronJob);
+
+
+
+const eseguiMeteo = async () => {
+    console.log("genero Meteo");
+    const apiKey = '7f7a4bb0b9b35f1d55ace42668684e6b';
+    const city = 'Bologna';
+    let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
+
+    fetch(apiUrl)
+        .then((resp) => {
+            return resp.json();
+        })
+        .then((data) => {
+            let temperatura = parseInt(data.main.temp) - 273.15;
+            let umidita = data.main.humidity  + "%";
+            let pressione = data.main.pressure + "hPa";
+            let descrizione = data.weather[0].description;
+            creaSquealMeteo(temperatura, umidita, pressione, descrizione);
+        })
+
+    async function creaSquealMeteo(temperatura, umidita, pressione, descrizione){
+        const reactionAngry = new reactionModel({
+            name: "angry",
+            //usersIds: ["aCaso"],
+        })
+        await reactionAngry.save();
+        const reactionDislike = new reactionModel({
+            name: "dislike",
+        })
+        await reactionDislike.save();
+        const reactionNormal = new reactionModel({
+            name: "normal",
+        })
+        await reactionNormal.save();
+        const reactionLike = new reactionModel({
+            name: "like",
+        })
+        await reactionLike.save();
+        const reactionHeart = new reactionModel({
+            name: "heart",
+        })
+        await reactionHeart.save();
+        const squeal = new squealModel({
+            sender: "jorge",
+            text: "temperatura: " + temperatura +
+                    "\n\numidita: " + umidita +
+                    "\n\npressione: " + pressione +
+                    "\n\ndescrizione: " + descrizione,
+            //geolocation: "",
+            //img:,
+            date: new Date(),
+            reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
+        });
+
+        const newSqueal = await squeal.save();
+
+        await inboxModel.findOneAndUpdate(
+            {receiver: "§WEATHERBOLO"}, // Query condition to find the document
+            {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
+            {new: true}, // Option to return the updated document
+        );
+        const notification = new notificationModel({
+            title: "New Squeal from " + " OpenWeather ",
+            text: "Check out the new Squeal from {*tag*{@" + " OpenWeather " + "}*tag*} in {*tag*{" + "§WEATHERBOLO" + "}*tag*}",
+            sender: "OpenWeather",
+            date: new Date(),
+        });
+        await notification.save();
+    }
+};
+
+cronJob.schedule('2 * * * * *', eseguiMeteo);
+
+
+
+
+const eseguiControversial = async () => {
+    let squealsControversials = await squealModel.find({CM: "polarizzante"});
+    console.log("polarizzanti:: " + squealsControversials);
+};
+
+cronJob.schedule('10 * * * * *', eseguiControversial);
+
+
 
 
 cronJob.schedule('0 0 * * *', async () => {
@@ -349,8 +431,8 @@ cronJob.schedule('0 0 * * *', async () => {
     let user = await userModel.find();
     for(let i = 0; i < user.length; i++){
         let char = user[i].characters;
-        if(parseInt(char[0].number) < 100){
-            let diff = 100 - parseInt(char[0].number);
+        if(parseInt(char[0].number) < 300){
+            let diff = 300 - parseInt(char[0].number);
 
             if(parseInt(char[0].number) > diff){
                 char[0].number = String(parseInt(char[0].number) + diff);
@@ -371,8 +453,8 @@ cronJob.schedule('0 0 * * 0', async () => {
     let user = await userModel.find();
     for(let i = 0; i < user.length; i++){
         let char = user[i].characters;
-        if(parseInt(char[1].number) < 700){
-            let diff = 700 - parseInt(char[1].number);
+        if(parseInt(char[1].number) < 2100){
+            let diff = 2100 - parseInt(char[1].number);
 
             if(parseInt(char[2].number) > diff){
                 char[1].number = String(parseInt(char[1].number) + diff);
@@ -395,8 +477,8 @@ cronJob.schedule('0 0 1 * *', async () => {
     let user = await userModel.find();
     for(let i = 0; i < user.length; i++){
         let char = user[i].characters;
-        if(parseInt(char[2].number) < 2800){
-            char[2].number = "2800";
+        if(parseInt(char[2].number) < 8400){
+            char[2].number = "8400";
             await userModel.findOneAndUpdate({username: user[i].username}, {characters: char});
         }
     }
@@ -425,15 +507,16 @@ app.get('/status', (request, response) => {
 
     response.send(status);
 });
-
-app.post("/register_user", async (request, response) => {
+// /users/user/
+// /users/user/banuser
+app.post("/users/user", async (request, response) => {
     try {
         request.body["password"] = encrypt(request.body["password"]);
         console.log("sono dentro");
 
         const giornalieri = new charactersSchema({
             name: "giornalieri",
-            number: "100",
+            number: "300",
         })
         console.log("prima del save");
 
@@ -442,14 +525,14 @@ app.post("/register_user", async (request, response) => {
 
         const settimanali = new charactersSchema({
             name: "settimanali",
-            number: "700",
+            number: "2100",
         })
         await settimanali.save();
         console.log("2");
 
         const mensili = new charactersSchema({
             name: "mensili",
-            number: "2800",
+            number: "8400",
         })
         await mensili.save();
         console.log("3");
@@ -488,7 +571,7 @@ app.post("/register_user", async (request, response) => {
     }
 });
 
-app.post("/authenticate_user", async (request, response) => {
+app.post("/users/user/authenticate_user", async (request, response) => {
     try {
         const user = await userModel.findOne({username: request.body['username']});
         if(request.body['password'] === decrypt(user['password'])) {
@@ -509,7 +592,43 @@ app.post("/authenticate_user", async (request, response) => {
     }
 });
 
-app.get("/existence_user", async (request, response) => {
+app.put("/users/user/change_password", async (request, response) => {
+    try {
+        if (!request.body.username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+        console.log(request.body.newPass + " " + request.body.username + " " + request.body.oldPass)
+        const utente = await userModel.findOne({ username: request.body.username });
+        if (utente) {
+            console.log(utente['password']);
+            console.log(decrypt(utente['password']));
+            if (request.body.oldPass === decrypt(utente['password'])) {
+                console.log("La password vecchia è corretta. Aggiorno la password...");
+                // Crea una nuova password crittografata
+                const encryptedNewPass = encrypt(request.body.newPass);
+                // Esegui l'aggiornamento della password
+                await userModel.findOneAndUpdate({ username: request.body.username }, { password: encryptedNewPass });
+                response.send(true);
+                console.log("Cambiamento effettuato");
+            } else {
+                response.send(false);
+                console.log("La password vecchia non corrisponde");
+            }
+        } else {
+            response.send(false);
+            console.log("Utente non trovato");
+        }
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/users/user/existence_user", async (request, response) => {
     try {
         if(await userModel.findOne({ username: request.query.username })) {
             response.send('exist');
@@ -521,7 +640,7 @@ app.get("/existence_user", async (request, response) => {
     }
 });
 
-app.get("/propic_user", async (request, response) => {
+app.get("/users/user/profilepic", async (request, response) => {
     try {
         const user = await userModel.findOne({ username: request.query.username }, { propic: true, _id: false });
         if(user) {
@@ -549,7 +668,7 @@ app.get("/search", async (request, response) => {
     }
 });
 
-app.get("/search_user", async (request, response) => {
+app.get("/users/user/search_user", async (request, response) => {
     try {
         const substringToSearch = request.query.value; // Replace with the substring you want to search for
         const resultUsernames = await userModel.find({ username: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, username: true });
@@ -561,7 +680,7 @@ app.get("/search_user", async (request, response) => {
     }
 });
 
-app.get("/search_channel", async (request, response) => {
+app.get("/channels/channel/search_channel", async (request, response) => {
     try {
         const substringToSearch = request.query.value; // Replace with the substring you want to search for
         const resultChannels = await channelModel.find({ name: { $regex: new RegExp(substringToSearch), $options: 'i' } }, { _id: false, name: true });
@@ -583,7 +702,7 @@ app.get("/users", async (request, response) => {
     }
 });
 
-app.get("/squeal", async (request, response) => {
+app.get("/squeals", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -632,7 +751,7 @@ app.get("/squeal", async (request, response) => {
     }
 });
 
-app.get("/channels_squeals", async (request, response) => {
+app.get("/channels/channels_squeals", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -670,16 +789,108 @@ app.get("/channels_squeals", async (request, response) => {
                     squeals.push(squeal);
                 }
             }
+            const squealerChannels = await channelModel.find({channelType: 'squealer'});
+            for(let squealerChannel of squealerChannels) {
+                const squealerChannelInbox = await inboxModel.findOne({receiver: '§' + squealerChannel.name});
+                const squealerSquealsIds = squealerChannelInbox.squealsIds;
+                for(let squealerSquealId of squealerSquealsIds) {
+                    let squeal = await squealModel.findOne({_id: squealerSquealId});
+
+                    squeal = {
+                        id: squeal._id.toHexString(),
+                        from: '§' + squealerChannel.name,
+                        sender: squeal.sender,
+                        geolocation: squeal.geolocation,
+                        img: squeal.img,
+                        text: squeal.text,
+                        date: squeal.date,
+                        resqueal: squeal.resqueal
+                    }
+                    squeals.push(squeal);
+                }
+            }
             squeals.sort(compareSquealsDate);
             response.send(squeals);
+            return;
         }
+        response.status(400).send([]);
     } catch (error) {
         console.log(error);
         response.status(500).send(error);
     }
 });
 
-app.get("/private_squeals", async (request, response) => {
+app.get("/squeals/unlogged_squeals", async (request, response) => {
+    try{
+        let squeals = [];
+        const squealerChannels = await channelModel.find({channelType: 'squealer'});
+        for(let squealerChannel of squealerChannels) {
+            const squealerChannelInbox = await inboxModel.findOne({receiver: '§' + squealerChannel.name});
+            const squealerSquealsIds = squealerChannelInbox.squealsIds;
+            for(let squealerSquealId of squealerSquealsIds) {
+                let squeal = await squealModel.findOne({_id: squealerSquealId});
+                squeal = {
+                    id: squeal._id.toHexString(),
+                    from: '§' + squealerChannel.name,
+                    sender: squeal.sender,
+                    geolocation: squeal.geolocation,
+                    img: squeal.img,
+                    text: squeal.text,
+                    date: squeal.date,
+                    resqueal: squeal.resqueal
+                }
+                squeals.push(squeal);
+            }
+        }
+        squeals.sort(compareSquealsDate);
+        response.send(squeals);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/squeals/explore_squeals", async (request, response) => {
+    try{
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            })
+            return;
+        }
+        let squeals = [];
+        const user = await userModel.findOne({username: username});
+        const channels = await channelModel.find({_id: {$nin: user.squealsIds}, channelType: 'user', access: 'public'});
+        for(let channel of channels) {
+            const inbox = await inboxModel.findOne({receiver: '§' + channel.name}, {squealsIds: true, _id: false});
+            const squealsIds = inbox.squealsIds;
+            for(let squealId of squealsIds) {
+                let squeal = await squealModel.findOne({_id: squealId});
+
+                squeal = {
+                    id: squeal._id.toHexString(),
+                    from: '§' + channel.name,
+                    sender: squeal.sender,
+                    geolocation: squeal.geolocation,
+                    img: squeal.img,
+                    text: squeal.text,
+                    date: squeal.date,
+                    resqueal: squeal.resqueal
+                }
+                squeals.push(squeal);
+            }
+        }
+
+        response.send(squeals);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+app.get("/squeals/private_squeals", async (request, response) => {
     try {
         let username = await authenticateUser(request);
         if (!username) {
@@ -717,7 +928,7 @@ app.get("/private_squeals", async (request, response) => {
     }
 });
 
-app.get("/related_squeals", async (request, response) => {
+app.get("/squeals/squeal/related_squeals", async (request, response) => {
     try {
         let username = await authenticateUser(request);
         if (!username) {
@@ -762,7 +973,7 @@ app.get("/related_squeals", async (request, response) => {
     }
 });
 
-app.get("/channel_squeals", async (request, response) => {
+app.get("/squeals/squeal/channel_squeals", async (request, response) => {
     try {
         let username = await authenticateUser(request);
         if (!username) {
@@ -773,43 +984,73 @@ app.get("/channel_squeals", async (request, response) => {
             })
             return;
         }
-        const channelQueried = request.query.name;
-        console.log(channelQueried);
-        const user = await userModel.findOne({username: username}, {channelsIds: true, _id: false});
-        const channel = await channelModel.findOne({name: channelQueried})
-        console.log(channel);
-        if(!channel){
-            response.status(404).send("Channel not found");
-            return;
-        }
-        if(channel.access !== "public" && !(user.channelsIds.includes(channel._id))){
-            response.status(403).send("You are not a member of the channel");
-            return;
-        }
-        let squeals = [];
-        const inbox = await inboxModel.findOne({receiver: '§' + channelQueried}, {squealsIds: true, _id: false});
-        for(let squealId of inbox.squealsIds) {
-            let squeal = await squealModel.findOne({_id: squealId});
-            squeal = {
-                id: squeal._id.toHexString(),
-                sender: squeal.sender,
-                geolocation: squeal.geolocation,
-                img: squeal.img,
-                text: squeal.text,
-                date: squeal.date,
-                resqueal: squeal.resqueal
+
+        if(request.query.name === "CONTROVERSIAL"){
+            let squealsControversials = await squealModel.find({CM: "polarizzante"});
+            let squeals = [];
+
+            for(let i = 0; i < squealsControversials.length; i++) {
+                console.log(squealsControversials[i].text);
+                let squeal = await squealModel.findOne({_id: squealsControversials[i]._id});
+
+                squeal = {
+                    id: squealsControversials[i]._id.toHexString(),
+                    sender: squealsControversials[i].sender,
+                    geolocation: squealsControversials[i].geolocation,
+                    img: squealsControversials[i].img,
+                    text: squealsControversials[i].text,
+                    date: squealsControversials[i].date,
+                    resqueal: squealsControversials[i].resqueal,
+                    CM: squealsControversials[i].CM
+                }
+                squeals.push(squeal);
             }
-            squeals.push(squeal);
+            response.send(squeals);
+
+        }else{
+            const channelQueried = request.query.name;
+            console.log(channelQueried);
+            const user = await userModel.findOne({username: username}, {channelsIds: true, _id: false});
+            const channel = await channelModel.findOne({name: channelQueried})
+            console.log(channel);
+            if(!channel){
+                response.status(404).send("Channel not found");
+                return;
+            }
+            if(channel.access !== "public" && !(user.channelsIds.includes(channel._id))){
+                response.status(403).send("You are not a member of the channel");
+                return;
+            }
+            let squeals = [];
+            const inbox = await inboxModel.findOne({receiver: '§' + channelQueried}, {squealsIds: true, _id: false});
+            for(let squealId of inbox.squealsIds) {
+                let squeal = await squealModel.findOne({_id: squealId});
+
+                squeal = {
+                    id: squeal._id.toHexString(),
+                    sender: squeal.sender,
+                    geolocation: squeal.geolocation,
+                    img: squeal.img,
+                    text: squeal.text,
+                    date: squeal.date,
+                    resqueal: squeal.resqueal,
+                    CM: squeal.CM
+                }
+                squeals.push(squeal);
+            }
+            squeals.sort(compareSquealsDate);
+            response.send(squeals);
         }
-        squeals.sort(compareSquealsDate);
-        response.send(squeals);
+
+
+
     } catch (error) {
         console.log(error);
         response.status(500).send(error);
     }
 });
 
-app.post("/post_squeal", async (request, response) => {
+app.post("/squeals/squeal/post_squeal", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -875,7 +1116,7 @@ app.post("/post_squeal", async (request, response) => {
             })
             await reactionHeart.save();
 
-            if(!(request.body.text.trim() !== "") && !request.body.geolocation && !request.body.img) {
+            if(!(!request.body.text || request.body.text.trim() !== "") && !request.body.geolocation && !request.body.img) {
                 response.status(400).send('Squeal body is mandatory');
                 return;
             }
@@ -907,10 +1148,9 @@ app.post("/post_squeal", async (request, response) => {
                         //let aggiunta = parseInt(arrayCaratteri.characters[0].number) - request.body.text.length;
                         arrayCaratteri.characters[0].number = String(aggiunta);
                         await userModel.findOneAndUpdate({username: request.body.sender}, {$set: {characters: arrayCaratteri.characters}});
-
                         const channel = await channelModel.findOne({name: receiverUsername.slice(1)});
 
-                        if(!user.admin) {
+                        if(!sender.admin) {
                             if (channel.channelType === 'squealer') {
                                 response.status(403).send('You have no permission to write on a squealer channel');
                                 return
@@ -975,7 +1215,7 @@ app.post("/post_squeal", async (request, response) => {
     }
 });
 
-app.post("/post_resqueal", async (request, response) => {
+app.post("/squeals/squeal/post_resqueal", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -1104,7 +1344,8 @@ app.get("/squeals/squeal/:squealId", async (request, response) => {
     }
 });
 
-app.put("/add_reaction", async (request, response) => {
+
+app.put("/users/user/reactions/add_reaction", async (request, response) => {
     try{
         const username = await authenticateUser(request);
         if (!username) {
@@ -1208,7 +1449,9 @@ app.put("/add_reaction", async (request, response) => {
         //console.log("charactersVariabile: " + arrayCaratteri);
         //console.log("characters 0: " + arrayCaratteri.characters[0].number);
 
-        if(total*0.25 < positive && total*0.25 > negative){
+        let CM = total * 0.25;
+
+        if(CM < positive && CM > negative && CM > 1){
 
             if(await squealModel.findOne({_id:squealId, CM: "popolare"})){
                 console.log("è gia popolare");
@@ -1229,7 +1472,7 @@ app.put("/add_reaction", async (request, response) => {
                 }
             }
 
-        }else if(total*0.25 > positive && total*0.25 < negative){
+        }else if(total*0.25 > positive && total*0.25 < negative && CM > 1){
 
             if(await squealModel.findOne({_id:squealId, CM: "impopolare"})){
                 console.log("è gia impopolare");
@@ -1251,7 +1494,7 @@ app.put("/add_reaction", async (request, response) => {
                 }
             }
 
-        }else if(total*0.25 < positive && total*0.25 < negative){
+        }else if(total*0.25 < positive && total*0.25 < negative  && CM > 1){
             await squealModel.findOneAndUpdate({_id:squealId}, {$set: {CM: "polarizzante"}},{new : true});
 
         }
@@ -1268,7 +1511,7 @@ app.put("/add_reaction", async (request, response) => {
 });
 
 
-app.get("/caratteriGiornalieri", async (request, response) => {
+app.get("/users/user/characters/daily", async (request, response) => {
     try {
         let caratteri = await userModel.findOne({username: request.query.username},{characters: true});
 
@@ -1391,7 +1634,7 @@ app.post("/channels/userChannels/userChannel/owners", async (request, response) 
         }
 
         const user = await userModel.findOne({username: username});
-        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true});
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
         const userToPromote = await userModel.findOne({username: request.body.toPromote});
         if(!userToPromote){
@@ -1449,7 +1692,8 @@ app.post("/channels/userChannels/userChannel/owners/depromote", async (request, 
             return;
         }
 
-        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true});
+        const user = await userModel.findOne({username: username});
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
         const userToDepromote = await userModel.findOne({username: request.body.toDepromote});
         if(!userToDepromote){
@@ -1507,7 +1751,8 @@ app.post("/channels/userChannels/userChannel/writers", async (request, response)
             return;
         }
 
-        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true});
+        const user = await userModel.findOne({username: username});
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
         const userToAdd = await userModel.findOne({username: request.body.toAdd});
         if(!userToAdd){
@@ -1572,7 +1817,8 @@ app.post("/channels/userChannels/userChannel/writers/depromote", async (request,
             return;
         }
 
-        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true});
+        const user = await userModel.findOne({username: username});
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
         const userToRemove = await userModel.findOne({username: request.body.toRemove});
         if(!userToRemove){
@@ -1634,7 +1880,8 @@ app.post("/channels/userChannels/userChannel/members/remove", async (request, re
             return;
         }
 
-        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true});
+        const user = await userModel.findOne({username: username});
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
         const userToRemove = await userModel.findOne({username: request.body.toRemove});
         if(!userToRemove){
@@ -1691,7 +1938,8 @@ app.post("/channels/userChannels/userChannel/members", async (request, response)
             return;
         }
 
-        const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
+        const userChannels = await userModel.findOne({username: username}, {channelsIds: true});
+        const user = await userModel.findOne({username: username});
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
         const userToAdd = await userModel.findOne({username: request.body.toAdd});
         if(!userToAdd){
@@ -1750,6 +1998,7 @@ app.post("/channels/userChannels/userChannel/privacy", async (request, response)
 
         const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const user = await userModel.findOne({username: username});
         const privacy = request.body.privacy;
         if(!privacy){
             response.status(400).send('Privacy must be specified in the request');
@@ -1798,6 +2047,7 @@ app.post("/channels/userChannels/userChannel/writingrestriction", async (request
 
         const userChannels = await userModel.findOne({username: username}, {channelsIds: true})
         const channel = await channelModel.findOne({name: request.body.channelName, channelType: "user"});
+        const user = await userModel.findOne({username: username});
         const writingRestriction = request.body.value;
         if(writingRestriction === ''){
             response.status(400).send('Writing restriction value must be specified in the request');
@@ -1825,6 +2075,7 @@ app.post("/channels/userChannels/userChannel/writingrestriction", async (request
         }
     } catch (error) {
         response.status(500).send(error);
+        console.log(error);
     }
 });
 
@@ -2067,7 +2318,6 @@ app.post("/users/user/notifications/notification", async (request, response) => 
             return;
         }
 
-        await notificationModel.deleteOne({_id: request.body.id});
         await inboxModel.findOneAndUpdate({receiver: "@" + username}, {$pull: {notificationsIds: request.body.id}}, {new: true});
     } catch (error) {
         console.log(error);
@@ -2125,8 +2375,19 @@ function compareNotificationsDate(a, b){
 }
 
 function compareSquealsDate(a, b){
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
+    let dateA = new Date(a.date);
+    let dateB = new Date(b.date);
+    if(a.CM === 'popolare') {
+        dateA.setDate(dateA.getDate() + 3);
+    } else if(a.CM === 'impopolare') {
+        dateA.setDate(dateA.getDate() - 3);
+    }
+    if(b.CM === 'popolare') {
+        dateB.setDate(dateB.getDate() + 3);
+    } else if(b.CM === 'impopolare') {
+        dateB.setDate(dateB.getDate() - 3);
+    }
+
     if(dateA - dateB > 0){
         return -1;
     } else if(dateA - dateB < 0) {
@@ -2135,7 +2396,8 @@ function compareSquealsDate(a, b){
         return 0;
     }
 }
-app.get("/admin", async (request, response) => {
+
+app.get("/users/user/admin", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2159,7 +2421,7 @@ app.get("/admin", async (request, response) => {
         response.status(500).send(error);
     }
 });
-app.put("/block_user", async (request, response) => {
+app.put("/users/user/block_user", async (request, response) => {
     try {
 
         console.log( request.body.username + "here we go")
@@ -2171,7 +2433,7 @@ app.put("/block_user", async (request, response) => {
         response.status(500).send(error);
     }
 });
-app.put("/unblock_user", async (request, response) => {
+app.put("/users/user/unblock_user", async (request, response) => {
     try {
 
         console.log( request.body.username + "here we go")
@@ -2184,7 +2446,7 @@ app.put("/unblock_user", async (request, response) => {
     }
 });
 
-app.get("/existence_block", async (request, response) => {
+app.get("/users/user/existence_block", async (request, response) => {
     try {
         if(await userModel.findOne({ username: request.query.username, blocked: true })) {
             response.send('yes');
@@ -2196,7 +2458,7 @@ app.get("/existence_block", async (request, response) => {
     }
 });
 
-app.get("/merged_squeals", async (request, response) => {
+app.get("/squeals/squeal/squealmerged_squeals", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2235,7 +2497,7 @@ app.get("/merged_squeals", async (request, response) => {
         response.status(500).send(error);
     }
 });
-app.get("/search_sender", async (request, response) => {
+app.get("/squeals/squeal/search_sender", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2283,7 +2545,7 @@ app.get("/search_sender", async (request, response) => {
 
 
 
-app.get("/search_receiver", async (request, response) => {
+app.get("/squeals/squeal/search_receiver", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2326,7 +2588,7 @@ app.get("/search_receiver", async (request, response) => {
     }
 });
 
-app.get("/search_date", async (request, response) => {
+app.get("/squeals/squeal/search_date", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2394,7 +2656,7 @@ app.get("/search_date", async (request, response) => {
     }
 });
 
-app.put("/add_characters", async (request, response) => {
+app.put("/users/user/charcters/add_characters", async (request, response) => {
     try {
 
         const arrayCaratteri = await userModel.findOne({username: request.body.username},{characters: true});
@@ -2419,7 +2681,7 @@ app.put("/add_characters", async (request, response) => {
     }
 });
 
-app.get("/numberReaction", async (request, response) => {
+app.get("/squeals/squeal/reactions/", async (request, response) => {
     try {
         //console.log("sono dentro a number reaction");
         //console.log("request.query.squealId number reaction:: " + request.query.squealId);
