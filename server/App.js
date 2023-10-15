@@ -33,6 +33,160 @@ const parseString = require('xml2js').parseString;
 
 mongoose.connect('mongodb://127.0.0.1:27017/Squealer');
 
+async function checkChannelALL() {
+    const squealerAll = await channelModel.findOne({name: 'ALL'});
+    if (!squealerAll) {
+        const channel = new channelModel({
+            name: 'ALL',
+            description: 'A generic channel used by the staff',
+            channelType: 'squealer'
+        });
+        await channel.save();
+        const inbox = new inboxModel({
+            receiver: '§ALL'
+        });
+        await inbox.save();
+        console.log('Squealer channel ALL created successfully')
+    }
+}
+checkChannelALL();
+
+async function checkChannelNews() {
+    const squealerNews = await channelModel.findOne({name: 'NEWS'});
+    if(!squealerNews) {
+        const channel = new channelModel({
+            name: 'NEWS',
+            description: 'A channel with all the news from the NY Times',
+            channelType: 'squealer'
+        });
+        await channel.save();
+        const inbox = new inboxModel({
+            receiver: '§NEWS'
+        });
+        await inbox.save();
+        console.log('Squealer channel NEWS created successfully');
+        const nyTimes = await userModel.findOne({username: 'NYTimes'});
+        if(!nyTimes) {
+            const user = new userModel({
+                name: 'NY',
+                surname: 'Times',
+                email: 'nytnews@nytimes.com',
+                username: 'NYTimes',
+                password: 'admin',
+                characters: '0',
+                propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fhelp.nytimes.com%2Fhc%2Fen-us%2Farticles%2F115014891408-Obtaining-and-using-Times-content&psig=AOvVaw2XDKBNB4cSI6wtVgA6SZkB&ust=1697469040010000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCPCCg4ur-IEDFQAAAAAdAAAAABAJ'
+            });
+            await user.save();
+            const inboxNYT = await inboxModel.findOne({receiver: '§NYTimes'});
+            if(!inboxNYT) {
+                const inbox = new inboxModel({
+                    receiver: '@NYTimes'
+                });
+                await inbox.save();
+            }
+            console.log('Squealer user NYTimes created successfully');
+        }
+    }
+}
+checkChannelNews()
+
+async function checkChannelControversial() {
+    const squealerControversial = await channelModel.findOne({name: 'CONTROVERSIAL'});
+    if(!squealerControversial) {
+        const channel = new channelModel({
+            name: 'CONTROVERSIAL',
+            description: 'A channel with all the controversial squeal',
+            channelType: 'squealer'
+        });
+        await channel.save();
+        const inbox = new inboxModel({
+            receiver: '§CONTROVERSIAL'
+        });
+        await inbox.save();
+        console.log('Squealer channel CONTROVERSIAL created successfully');
+    }
+}
+checkChannelControversial();
+
+async function checkChannelIMG() {
+    const squealerImg = await channelModel.findOne({name: 'RANDOMIMG'});
+    if(!squealerImg) {
+        const channel = new channelModel({
+            name: 'RANDOMIMG',
+            description: 'A channel with random image picked from an api called Lorem Picsum',
+            channelType: 'squealer'
+        });
+        await channel.save();
+        const inbox = new inboxModel({
+            receiver: '§RANDOMIMG'
+        });
+        await inbox.save();
+        console.log('Squealer channel RANDOMIMG created successfully');
+        const loremPicsum = await userModel.findOne({username: 'LoremPicsum'});
+        if(!loremPicsum) {
+            const user = new userModel({
+                name: 'Lorem',
+                surname: 'Picsum',
+                email: 'lorem@picsum.com',
+                username: 'LoremPicsum',
+                password: 'admin',
+                characters: '0',
+                propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fpicsum.photos%2F&psig=AOvVaw3_pg0qugMb6aIuf8_s8hil&ust=1697470177425000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCODA-qmv-IEDFQAAAAAdAAAAABAE'
+            });
+            await user.save();
+            const inboxPicsum = await inboxModel.findOne({receiver: '§LoremPicsum'});
+            if(!inboxPicsum) {
+                const inbox = new inboxModel({
+                    receiver: '@LoremPicsum'
+                });
+                await inbox.save();
+            }
+            console.log('Squealer user LoremPicsum created successfully');
+        }
+    }
+}
+checkChannelIMG();
+
+async function checkChannelWeather() {
+    const squealerWeather = await channelModel.findOne({name: 'WEATHERBOLO'});
+    if(!squealerWeather) {
+        const channel = new channelModel({
+            name: 'WEATHERBOLO',
+            description: 'A channel with all the weather forecast by Open Weather',
+            channelType: 'squealer'
+        });
+        await channel.save();
+        const inbox = new inboxModel({
+            receiver: '§WEATHERBOLO'
+        });
+        await inbox.save();
+        console.log('Squealer channel WEATHERBOLO created successfully');
+        const openWeather = await userModel.findOne({username: 'OpenWeather'});
+        if(!openWeather) {
+            const user = new userModel({
+                name: 'Open',
+                surname: 'Weather',
+                email: 'open@weather.com',
+                username: 'OpenWeather',
+                password: 'admin',
+                characters: '0',
+                propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fopenweathermap.org%2Fweather-conditions&psig=AOvVaw0-wTVhWYVZIA_Mw0KemgZb&ust=1697471809930000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCODr67O1-IEDFQAAAAAdAAAAABAF'
+            });
+            await user.save();
+            const inboxWeather = await inboxModel.findOne({receiver: '§OpenWeather'});
+            if(!inboxWeather) {
+                const inbox = new inboxModel({
+                    receiver: '@OpenWeather'
+                });
+                await inbox.save();
+            }
+            console.log('Squealer user OpenWeather created successfully');
+        }
+    }
+}
+checkChannelWeather();
+
+
 // Imposta l'URL dell'API di destinazione
 const apiDestinazione = 'URL_Dell_API_Di_Destinazione';
 
@@ -722,23 +876,23 @@ app.post("/post_squeal", async (request, response) => {
             await reactionHeart.save();
 
             if(!(request.body.text.trim() !== "") && !request.body.geolocation && !request.body.img) {
-            response.status(400).send('Squeal body is mandatory');
-            return;
-        }
-        const squeal = new squealModel({
-            sender: request.body.sender,
-            text: request.body.text,
-            geolocation: request.body.geolocation,
-            img: request.body.img,
-            date: new Date(),
-            reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
-        });
-        const sender = await userModel.findOne({username: request.body.sender});
-        const newSqueal = await squeal.save();
-        const receiversArr = request.body.receivers;
-        for(let receiverUsername of receiversArr){
-            if (await inboxModel.findOne({ receiver: receiverUsername })) {
-                if(receiverUsername.charAt(0) === '§') {//aggiorna caratteri giornaalieri---------
+                response.status(400).send('Squeal body is mandatory');
+                return;
+            }
+            const squeal = new squealModel({
+                sender: request.body.sender,
+                text: request.body.text,
+                geolocation: request.body.geolocation,
+                img: request.body.img,
+                date: new Date(),
+                reactions: [reactionAngry, reactionDislike, reactionNormal, reactionLike, reactionHeart],
+            });
+            const sender = await userModel.findOne({username: request.body.sender});
+            const newSqueal = await squeal.save();
+            const receiversArr = request.body.receivers;
+            for(let receiverUsername of receiversArr){
+                if (await inboxModel.findOne({ receiver: receiverUsername })) {
+                    if(receiverUsername.charAt(0) === '§') {//aggiorna caratteri giornaalieri---------
                         const arrayCaratteri = await userModel.findOne({username: request.body.sender}, {characters: true});
                         let aggiunta = 0;
                         if (request.body.text) {
@@ -768,22 +922,26 @@ app.post("/post_squeal", async (request, response) => {
                                 return;
                             }
                         }
-                    await inboxModel.findOneAndUpdate(
-                        {receiver: receiverUsername}, // Query condition to find the document
-                        {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
-                        {new: true}, // Option to return the updated document
-                    );
-                    const notification = new notificationModel({
-                        title: "New Squeal from " + request.body.sender,
-                        text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*} in {*tag*{" + receiverUsername + "}*tag*}",
-                        sender: request.body.sender,
-                        date: new Date(),
-                    });
-                    await notification.save();
+                        await inboxModel.findOneAndUpdate(
+                            {receiver: receiverUsername}, // Query condition to find the document
+                            {$push: {squealsIds: newSqueal._id.toHexString()}}, // Update operation to push the new string
+                            {new: true}, // Option to return the updated document
+                        );
+                        const notification = new notificationModel({
+                            title: "New Squeal from " + request.body.sender,
+                            text: "Check out the new Squeal from {*tag*{@" + request.body.sender + "}*tag*} in {*tag*{" + receiverUsername + "}*tag*}",
+                            sender: request.body.sender,
+                            date: new Date(),
+                        });
+                        await notification.save();
 
                         const channelUsers = await userModel.find({channelsIds: {$in: [channel._id.toHexString()]}})
-                        for(let user of channelUsers) {
-                            await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
+                        if(channel.channelType === 'squealer'){
+                            await inboxModel.updateMany({}, {$push: {notificationsIds: notification._id.toHexString()}}, {new: true});
+                        } else {
+                            for (let user of channelUsers) {
+                                await inboxModel.findOneAndUpdate({receiver: "@" + user.username}, {$push: {notificationsIds: notification._id.toHexString()}})
+                            }
                         }
                     } else {
                         const notification = new notificationModel({
