@@ -9,6 +9,10 @@ import Spinner from "./Spinner";
 import BackToTop from "./BackToTop";
 
 function NotificationsScrollPane() {
+    const logged = document.cookie.includes('loggedStatus');
+    if(!logged) {
+        navigate('/');
+    }
     const [notifications, setNotifications] = useState(null);
     const [key, forceUpdate] = useState(0);
 

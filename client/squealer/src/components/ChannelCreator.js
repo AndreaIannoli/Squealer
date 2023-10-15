@@ -7,6 +7,10 @@ import Squeal from "./Squeal";
 import {useNavigate} from "react-router-dom";
 
 function ChannelCreator() {
+    const logged = document.cookie.includes('loggedStatus');
+    if(!logged) {
+        navigate('/');
+    }
     useEffect(() => {
         var inputReceivers = document.getElementById('owners'),
             tagifyReceivers = new Tagify(inputReceivers, {enforceWhitelist: true, whitelist:[], dropdown: {highlightFirst: true}}),

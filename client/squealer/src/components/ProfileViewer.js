@@ -19,6 +19,10 @@ function ProfileViewer() {
     const { username } = useParams();
     let [block,setBlock] = useState();
     let [admin, setAdmin] = useState();
+    const logged = document.cookie.includes('loggedStatus');
+    if(!logged) {
+        navigate('/');
+    }
     useEffect( () => {
         async function retrieveSqueals() {
             setSqueals(await loadRelatedSqueals(username));

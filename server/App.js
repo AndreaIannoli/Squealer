@@ -186,9 +186,6 @@ checkChannelWeather();
 
 // Imposta l'URL dell'API di destinazione
 const apiDestinazione = 'URL_Dell_API_Di_Destinazione';
-
-
-
 async function getRss(){
     return await axios.get(`https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml`)
         .then((response) => {

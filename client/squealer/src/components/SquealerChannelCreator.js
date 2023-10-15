@@ -7,6 +7,10 @@ import Squeal from "./Squeal";
 import {useNavigate} from "react-router-dom";
 
 function SquealerChannelCreator() {
+    const logged = document.cookie.includes('loggedStatus');
+    if(!logged) {
+        navigate('/');
+    }
     const [channelName, setChannelName] = useState('');
     const [channelDescription, setChannelDescription] = useState('');
     const [error, setError] = useState('');

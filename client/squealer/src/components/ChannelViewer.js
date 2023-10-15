@@ -13,6 +13,10 @@ import {checkAdmin} from "./Navbar";
 function ChannelViewer() {
     const navigate = useNavigate();
     let { name } = useParams();
+    const logged = document.cookie.includes('loggedStatus');
+    if(!logged) {
+        navigate('/');
+    }
     async function getChannel() {
         try {
             return await axios.get(`https://${getServerDomain()}/channels/${name}`, {withCredentials: true}).catch((e) => {
