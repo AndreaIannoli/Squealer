@@ -260,7 +260,7 @@ async function getRss(){
         });
 }
 
-cronJob.schedule('*/2 * * * *', () => {
+cronJob.schedule('*/5 * * * *', () => {
     getRss();
 });
 
@@ -337,7 +337,7 @@ const eseguiCronJob = async () => {
     }
 };
 
-cronJob.schedule('10 * * * * *', eseguiCronJob);
+cronJob.schedule('*/5 * * * *', eseguiCronJob);
 
 
 
@@ -353,6 +353,7 @@ const eseguiMeteo = async () => {
         })
         .then((data) => {
             let temperatura = parseInt(data.main.temp) - 273.15;
+
             let umidita = data.main.humidity  + "%";
             let pressione = data.main.pressure + "hPa";
             let descrizione = data.weather[0].description;
@@ -382,7 +383,7 @@ const eseguiMeteo = async () => {
         })
         await reactionHeart.save();
         const squeal = new squealModel({
-            sender: "jorge",
+            sender: "OpenWeather",
             text: "temperatura: " + temperatura +
                     "\n\numidita: " + umidita +
                     "\n\npressione: " + pressione +
@@ -410,7 +411,7 @@ const eseguiMeteo = async () => {
     }
 };
 
-cronJob.schedule('2 * * * * *', eseguiMeteo);
+cronJob.schedule('*/5 * * * *', eseguiMeteo);
 
 
 
@@ -420,7 +421,7 @@ const eseguiControversial = async () => {
     console.log("polarizzanti:: " + squealsControversials);
 };
 
-cronJob.schedule('10 * * * * *', eseguiControversial);
+cronJob.schedule('*/5 * * * *', eseguiControversial);
 
 
 
@@ -2325,9 +2326,7 @@ app.post("/users/user/notifications/notification", async (request, response) => 
     }
 });
 
-server.listen(PORT, () => {
-    console.log("Server Listening on PORT:", PORT);
-});
+
 
 // Encrypt data
 function encrypt(text) {
@@ -2644,9 +2643,7 @@ app.get("/squeals/squeal/search_date", async (request, response) => {
                         };
                         squeals.push(squeal);
                     }
-
                 }
-
             }
         }
         response.send(squeals);
@@ -2681,7 +2678,7 @@ app.put("/users/user/charcters/add_characters", async (request, response) => {
     }
 });
 
-app.get("/squeals/squeal/reactions/", async (request, response) => {
+app.get("/squeals/squeal/reactions/number", async (request, response) => {
     try {
         //console.log("sono dentro a number reaction");
         //console.log("request.query.squealId number reaction:: " + request.query.squealId);
@@ -2710,4 +2707,9 @@ app.get("/squeals/squeal/reactions/", async (request, response) => {
     } catch (error) {
         response.status(500).send(error);
     }
+});
+
+
+server.listen(PORT, () => {
+    console.log("Server Listening on PORT:", PORT);
 });

@@ -199,13 +199,9 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
         // Seleziona tutti gli elementi span sulla pagina
         var spanElements = document.querySelectorAll('span');
 
-        // Itera su tutti gli elementi span
         spanElements.forEach(function(spanElement) {
-            // Ottieni l'ID di ciascun elemento span
-            var spanID = spanElement.id;
 
-            // Visualizza l'ID o fai qualcos'altro con esso
-            //console.log("ID dello span: " + spanID + "    " + spanID.charAt(4) + "  " + spanID.substring(11, spanID.length));
+            var spanID = spanElement.id;
 
             if(spanID.charAt(4) === 'a'){
                 //console.log("angry   " +  spanID.substring(9, spanID.size));
@@ -365,7 +361,7 @@ export function checkForTags(text) {
 }
 
 async function giveNumberReactions(id, tipo){
-      return await axios.get(`https://${getServerDomain()}/squeals/squeal/reactions/?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
+      return await axios.get(`https://${getServerDomain()}/squeals/squeal/reactions/number?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
         .then(response => {
                 //console.log("response data:: " + response.data);
                 //console.log("span" + tipo);
