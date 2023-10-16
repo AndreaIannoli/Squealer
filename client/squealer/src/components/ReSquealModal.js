@@ -81,7 +81,7 @@ function ReSquealModal({resquealModalId, squealBody, username, propic, from, dat
                     </div>
                     <div className="modal-body">
                         <div className="col-12">
-                            <div className='container-fluid pt-4 pt-md-0 mt-5 mt-md-0'>
+                            <div className='container-fluid pt-md-0 mt-0 mt-md-0'>
                                 <div className='row rounded-4 bg-white p-0 ms-3 me-3'>
                                     <div className='col-12 mb-3 mb-lg-1'>
                                         <div className='container-fluid p-0'>

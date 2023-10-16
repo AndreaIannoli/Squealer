@@ -1,9 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
 
-iframe
-{
-  display: none;
-}
 
 :root {
   /** PRIMARY */
@@ -20,6 +16,11 @@ iframe
   --color-background-600: #8b8b8b;
 
   --bs-body-color: grey;
+}
+
+iframe
+{
+  display: none;
 }
 
 * {

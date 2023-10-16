@@ -7,15 +7,16 @@ import Squeal, {formatDate} from "./Squeal";
 import React from "react";
 import Spinner from "./Spinner";
 import BackToTop from "./BackToTop";
+import {useNavigate} from "react-router-dom";
 
 function NotificationsScrollPane() {
+    const navigate = useNavigate();
     const logged = document.cookie.includes('loggedStatus');
     if(!logged) {
         navigate('/');
     }
     const [notifications, setNotifications] = useState(null);
     const [key, forceUpdate] = useState(0);
-
     useEffect(() => {
         async function retrieveNotifications() {
             setNotifications(await loadNotifications());
@@ -54,10 +55,11 @@ function NotificationsScrollPane() {
         try {
             await axios.post(`https://${getServerDomain()}/users/user/notifications/notification`, {
                 id: notificationId
-            }, {withCredentials: true}).catch(error => {
+            }, {withCredentials: true}).then((r) => {
+                forceUpdate(currentKey => currentKey + 1);
+            }).catch(error => {
                 console.log(error.message);
             });
-            forceUpdate(currentKey => currentKey + 1);
         } catch (error) {
             console.log(error);
         }

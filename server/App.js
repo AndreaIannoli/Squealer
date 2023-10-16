@@ -73,7 +73,7 @@ async function checkChannelNews() {
                 email: 'nytnews@nytimes.com',
                 username: 'NYTimes',
                 password: 'admin',
-                propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fhelp.nytimes.com%2Fhc%2Fen-us%2Farticles%2F115014891408-Obtaining-and-using-Times-content&psig=AOvVaw2XDKBNB4cSI6wtVgA6SZkB&ust=1697469040010000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCPCCg4ur-IEDFQAAAAAdAAAAABAJ'
+                propic: 'https://cdn0.iconfinder.com/data/icons/circle-icons/512/new_york_times.png'
             });
             await user.save();
             const inboxNYT = await inboxModel.findOne({receiver: '§NYTimes'});
@@ -129,7 +129,7 @@ async function checkChannelIMG() {
                 email: 'lorem@picsum.com',
                 username: 'LoremPicsum',
                 password: 'admin',
-                propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fpicsum.photos%2F&psig=AOvVaw3_pg0qugMb6aIuf8_s8hil&ust=1697470177425000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCODA-qmv-IEDFQAAAAAdAAAAABAE'
+                propic: 'https://static.vecteezy.com/system/resources/previews/006/998/435/original/photo-camera-icons-photo-camera-icon-design-illustration-photo-camera-simple-sign-photo-camera-logo-free-vector.jpg'
             });
             await user.save();
             const inboxPicsum = await inboxModel.findOne({receiver: '§LoremPicsum'});
@@ -167,7 +167,7 @@ async function checkChannelWeather() {
                 email: 'open@weather.com',
                 username: 'OpenWeather',
                 password: 'admin',
-                propic: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fopenweathermap.org%2Fweather-conditions&psig=AOvVaw0-wTVhWYVZIA_Mw0KemgZb&ust=1697471809930000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCODr67O1-IEDFQAAAAAdAAAAABAF'
+                propic: 'https://images.rawpixel.com/image_1300/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvdnByb2plY3RvbGQxLW5pbmctMTEzMl8yLmpwZw.jpg'
             });
             await user.save();
             const inboxWeather = await inboxModel.findOne({receiver: '§OpenWeather'});
@@ -651,6 +651,62 @@ app.get("/users/user/profilepic", async (request, response) => {
     }
 });
 
+app.get("/squeal", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+        }
+
+        const user = await userModel.findOne({username: username}, {channelsIds: true, username: true, _id: false});
+        const idToFind = request.query.squealId;
+        const squeal = await squealModel.findOne({_id: idToFind});
+        if(!squeal){
+            response.status(404).send();
+            return;
+        }
+        if(user) {
+            if(squeal.sender === user.username){
+                response.send(squeal)
+                return;
+            }
+            const userInbox = await inboxModel.findOne({receiver: '@' + username}, {squealsIds: true, _id: false})
+            if(userInbox !== null && userInbox.squealsIds.includes(idToFind)) {
+                response.send(squeal);
+                return;
+            }
+            const channelsIds = user.channelsIds;
+            for(let channelId of channelsIds) {
+                const channel = await channelModel.findOne({_id: channelId}, {name: true, _id: false});
+                const inbox = await inboxModel.findOne({receiver: '§' + channel.name}, {squealsIds: true, _id: false});
+                if(inbox === null){
+                    continue;
+                }
+                const squealsIds = inbox.squealsIds;
+                if(squealsIds.includes(idToFind)) {
+                    response.send(squeal);
+                    return;
+                }
+            }
+            const squealerChannels = channelModel.find({squealsIds: {$in: squeal._id.toHexString()}});
+            if(squealerChannels){
+                response.send(squeal);
+                return;
+            }
+
+            response.status(404).send();
+        }
+        const squealerChannels = channelModel.find({squealsIds: {$in: squeal._id.toHexString()}});
+        if(squealerChannels){
+            response.send(squeal);
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
 app.get("/search", async (request, response) => {
     try {
         const substringToSearch = request.query.value; // Replace with the substring you want to search for
@@ -696,55 +752,6 @@ app.get("/users", async (request, response) => {
     try {
         response.send(users);
     } catch (error) {
-        response.status(500).send(error);
-    }
-});
-
-app.get("/squeals", async (request, response) => {
-    try {
-        const username = await authenticateUser(request);
-        if (!username) {
-            response.cookie('jwt', '', { httpOnly: true, secure: true });
-            response.json({
-                result: "authentication failed"
-            })
-            return;
-        }
-
-        const user = await userModel.findOne({username: username}, {channelsIds: true, username: true, _id: false});
-        const idToFind = request.query.squealId;
-        const squeal = await squealModel.findOne({_id: idToFind});
-        if(!squeal){
-            response.status(404).send();
-            return;
-        }
-        if(user) {
-            if(squeal.sender === user.username){
-                response.send(squeal)
-                return;
-            }
-            const userInbox = await inboxModel.findOne({receiver: '@' + username}, {squealsIds: true, _id: false})
-            if(userInbox !== null && userInbox.squealsIds.includes(idToFind)) {
-                response.send(squeal);
-                return;
-            }
-            const channelsIds = user.channelsIds;
-            for(let channelId of channelsIds) {
-                const channel = await channelModel.findOne({_id: channelId}, {name: true, _id: false});
-                const inbox = await inboxModel.findOne({receiver: '§' + channel.name}, {squealsIds: true, _id: false});
-                if(inbox === null){
-                    continue;
-                }
-                const squealsIds = inbox.squealsIds;
-                if(squealsIds.includes(idToFind)) {
-                    response.send(squeal);
-                    return;
-                }
-            }
-            response.status(404).send();
-        }
-    } catch (error) {
-        console.log(error);
         response.status(500).send(error);
     }
 });
@@ -963,6 +970,27 @@ app.get("/squeals/squeal/related_squeals", async (request, response) => {
                 }
             }
         }
+        const squealerChannels = await channelModel.find({channelType: 'squealer'});
+        for(let squealerChannel of squealerChannels) {
+            const squealerChannelInbox = await inboxModel.findOne({receiver: '§' + squealerChannel.name});
+            const squealerSquealsIds = squealerChannelInbox.squealsIds;
+            for(let squealerSquealId of squealerSquealsIds) {
+                let squeal = await squealModel.findOne({_id: squealerSquealId});
+                if(squeal.sender === usernameQueried) {
+                    squeal = {
+                        id: squeal._id.toHexString(),
+                        from: '§' + squealerChannel.name,
+                        sender: squeal.sender,
+                        geolocation: squeal.geolocation,
+                        img: squeal.img,
+                        text: squeal.text,
+                        date: squeal.date,
+                        resqueal: squeal.resqueal
+                    }
+                    squeals.push(squeal);
+                }
+            }
+        }
         squeals.sort(compareSquealsDate);
         response.send(squeals);
     } catch (error) {
@@ -1048,7 +1076,7 @@ app.get("/squeals/squeal/channel_squeals", async (request, response) => {
     }
 });
 
-app.post("/squeals/squeal/post_squeal", async (request, response) => {
+app.post("/squeals/squeal/postsqueal", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -1090,6 +1118,7 @@ app.post("/squeals/squeal/post_squeal", async (request, response) => {
         if(!flag) {
             response.status(400).send('Characters amount exceeded')
             console.log("superato limite di craatteri");
+            return;
         }else{
 
             const reactionAngry = new reactionModel({
@@ -1306,7 +1335,7 @@ app.post("/squeals/squeal/post_resqueal", async (request, response) => {
 });
 
 //  Check user reaction existence
-app.get("/squeals/squeal/:squealId", async (request, response) => {
+app.get("/squeals/squeal/reactions/:squealId", async (request, response) => {
     try {
         let username = await authenticateUser(request);
         if (!username) {
@@ -1671,6 +1700,7 @@ app.post("/channels/userChannels/userChannel/owners", async (request, response) 
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -1730,6 +1760,7 @@ app.post("/channels/userChannels/userChannel/owners/depromote", async (request, 
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -1796,6 +1827,7 @@ app.post("/channels/userChannels/userChannel/writers", async (request, response)
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -1859,6 +1891,7 @@ app.post("/channels/userChannels/userChannel/writers/depromote", async (request,
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -1917,6 +1950,7 @@ app.post("/channels/userChannels/userChannel/members/remove", async (request, re
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -1975,6 +2009,7 @@ app.post("/channels/userChannels/userChannel/members", async (request, response)
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -2024,6 +2059,7 @@ app.post("/channels/userChannels/userChannel/privacy", async (request, response)
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -2070,6 +2106,7 @@ app.post("/channels/userChannels/userChannel/writingrestriction", async (request
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -2097,13 +2134,17 @@ app.get("/channels/:channelName", async (request, response) => {
         if(channel) {
             if(user.admin) {
                 response.send(channel);
+                return;
             } else if(channel.channelType === 'squealer' || (channel.access === 'public' || (userChannels && userChannels.channelsIds.includes(channel._id.toHexString())))) {
                 response.send(channel);
+                return;
             } else {
                 response.status(403).send('You can\'t access this channel');
+                return;
             }
         } else {
             response.status(404).send('Channel doesn\'t exist');
+            return;
         }
     } catch (error) {
         response.status(500).send(error);
@@ -2230,169 +2271,6 @@ app.post("/channels/unsubscribe", async (request, response) => {
     }
 });
 
-//  Check channel subscription
-app.get("/channels/:channelName", async (request, response) => {
-    try {
-        const username = await authenticateUser(request);
-        if (!username) {
-            response.cookie('jwt', '', { httpOnly: true, secure: true });
-            response.status(401);
-            response.json({
-                result: "authentication failed"
-            });
-            return;
-        }
-
-        const channelName = request.params.channelName;
-        const usernameQueried = request.query.username;
-
-        const channel = await channelModel.findOne({name: channelName}, {_id: true});
-        const user = await userModel.findOne({username: usernameQueried});
-        if(!user) {
-            response.status(404).send("User not found");
-            return;
-        }
-
-        if(user.channelsIds.includes(channel._id.toHexString())){
-            response.send("Subscribed");
-        } else {
-            response.send("Unsubscribed");
-        }
-    } catch (error) {
-        response.status(500).send(error);
-    }
-});
-
-
-//  Retrieve user notifications
-app.get("/users/user/notifications", async (request, response) => {
-    try {
-        let username = await authenticateUser(request);
-        if (!username) {
-            response.cookie('jwt', '', { httpOnly: true, secure: true });
-            response.status(403);
-            response.json({
-                result: "authentication failed"
-            })
-            return;
-        }
-
-        const notifications = []
-
-        const user = await userModel.findOne({username: username}, {channelsIds: true});
-
-        const inbox = await inboxModel.findOne({receiver: "@" + username});
-        for(let notificationId of inbox.notificationsIds){
-            const notification = await notificationModel.findOne({_id: notificationId});
-            notifications.push(notification);
-        }
-
-        for(let channelId of user.channelsIds){
-            const channel = await channelModel.findOne({_id: channelId});
-            const channelInbox = await inboxModel.findOne({receiver: "§" + channel.name});
-            for(let notificationId of channelInbox.notificationsIds){
-                const notification = await notificationModel.findOne({_id: notificationId});
-                notifications.push(notification);
-            }
-        }
-
-        notifications.sort(compareNotificationsDate);
-        response.send(notifications);
-    } catch (error) {
-        console.log(error);
-        response.status(500).send(error);
-    }
-});
-
-//  Deletes a specific notification for the user logged
-app.post("/users/user/notifications/notification", async (request, response) => {
-    try {
-        const username = await authenticateUser(request);
-        if (!username) {
-            response.cookie('jwt', '', { httpOnly: true, secure: true });
-            response.json({
-                result: "authentication failed"
-            })
-            return;
-        }
-
-        await inboxModel.findOneAndUpdate({receiver: "@" + username}, {$pull: {notificationsIds: request.body.id}}, {new: true});
-    } catch (error) {
-        console.log(error);
-        response.status(500).send(error);
-    }
-});
-
-
-
-// Encrypt data
-function encrypt(text) {
-    const iv = crypto.randomBytes(16); // Generate a random IV (Initialization Vector)
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(secretKey, 'hex'), iv);
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return iv.toString('hex') + encrypted;
-}
-
-// Decrypt data
-function decrypt(encryptedText) {
-    const iv = Buffer.from(encryptedText.slice(0, 32), 'hex'); // Extract the IV from the encrypted data
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(secretKey, 'hex'), iv);
-    encryptedText = encryptedText.slice(32); // Remove the IV from the encrypted data
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-}
-
-async function authenticateUser(request) {
-    if(!request.cookies.loggedStatus){
-        console.log('sloggato');
-        return false;
-    }
-    const token = jwt.verify(request.cookies.jwt, secretKey);
-    const user = await userModel.findOne({username: token.username}, {username: true, _id: true});
-    if(user != null && user._id.toHexString() === token.id){
-        return token.username;
-    } else {
-        return false;
-    }
-}
-
-function compareNotificationsDate(a, b){
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    if(dateA - dateB > 0){
-        return -1;
-    } else if(dateA - dateB < 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-function compareSquealsDate(a, b){
-    let dateA = new Date(a.date);
-    let dateB = new Date(b.date);
-    if(a.CM === 'popolare') {
-        dateA.setDate(dateA.getDate() + 3);
-    } else if(a.CM === 'impopolare') {
-        dateA.setDate(dateA.getDate() - 3);
-    }
-    if(b.CM === 'popolare') {
-        dateB.setDate(dateB.getDate() + 3);
-    } else if(b.CM === 'impopolare') {
-        dateB.setDate(dateB.getDate() - 3);
-    }
-
-    if(dateA - dateB > 0){
-        return -1;
-    } else if(dateA - dateB < 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 app.get("/users/user/admin", async (request, response) => {
     try {
         const username = await authenticateUser(request);
@@ -2454,7 +2332,7 @@ app.get("/users/user/existence_block", async (request, response) => {
     }
 });
 
-app.get("/squeals/squeal/squealmerged_squeals", async (request, response) => {
+app.get("/admin/squealmerged_squeals", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2493,7 +2371,7 @@ app.get("/squeals/squeal/squealmerged_squeals", async (request, response) => {
         response.status(500).send(error);
     }
 });
-app.get("/squeals/squeal/search_sender", async (request, response) => {
+app.get("/admin/search_sender", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2541,7 +2419,7 @@ app.get("/squeals/squeal/search_sender", async (request, response) => {
 
 
 
-app.get("/squeals/squeal/search_receiver", async (request, response) => {
+app.get("/admin/search_receiver", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2584,7 +2462,7 @@ app.get("/squeals/squeal/search_receiver", async (request, response) => {
     }
 });
 
-app.get("/squeals/squeal/search_date", async (request, response) => {
+app.get("/admin/search_date", async (request, response) => {
     try {
         const username = await authenticateUser(request);
         if (!username) {
@@ -2675,7 +2553,7 @@ app.put("/users/user/charcters/add_characters", async (request, response) => {
     }
 });
 
-app.get("/squeals/squeal/reactions/number", async (request, response) => {
+app.get("/squeals/squeal/reactions/reaction/number", async (request, response) => {
     try {
         //console.log("sono dentro a number reaction");
         //console.log("request.query.squealId number reaction:: " + request.query.squealId);
@@ -2705,6 +2583,170 @@ app.get("/squeals/squeal/reactions/number", async (request, response) => {
         response.status(500).send(error);
     }
 });
+
+//  Check channel subscription
+app.get("/users/user/subscriptions/:channelName", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(401);
+            response.json({
+                result: "authentication failed"
+            });
+            return;
+        }
+
+        const channelName = request.params.channelName;
+        const usernameQueried = request.query.username;
+
+        const channel = await channelModel.findOne({name: channelName}, {_id: true});
+        const user = await userModel.findOne({username: usernameQueried});
+        if(!user) {
+            response.status(404).send("User not found");
+            return;
+        }
+
+        if(user.channelsIds.includes(channel._id.toHexString())){
+            response.send("Subscribed");
+        } else {
+            response.send("Unsubscribed");
+        }
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
+
+
+//  Retrieve user notifications
+app.get("/users/user/notifications", async (request, response) => {
+    try {
+        let username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.status(403);
+            response.json({
+                result: "authentication failed"
+            })
+            return;
+        }
+
+        const notifications = []
+
+        const user = await userModel.findOne({username: username}, {channelsIds: true});
+
+        const inbox = await inboxModel.findOne({receiver: "@" + username});
+        for(let notificationId of inbox.notificationsIds){
+            const notification = await notificationModel.findOne({_id: notificationId});
+            notifications.push(notification);
+        }
+
+        for(let channelId of user.channelsIds){
+            const channel = await channelModel.findOne({_id: channelId});
+            const channelInbox = await inboxModel.findOne({receiver: "§" + channel.name});
+            for(let notificationId of channelInbox.notificationsIds){
+                const notification = await notificationModel.findOne({_id: notificationId});
+                notifications.push(notification);
+            }
+        }
+
+        notifications.sort(compareNotificationsDate);
+        response.send(notifications);
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+//  Deletes a specific notification for the user logged
+app.post("/users/user/notifications/notification", async (request, response) => {
+    try {
+        const username = await authenticateUser(request);
+        if (!username) {
+            response.cookie('jwt', '', { httpOnly: true, secure: true });
+            response.json({
+                result: "authentication failed"
+            })
+            return;
+        }
+
+        await inboxModel.findOneAndUpdate({receiver: "@" + username}, {$pull: {notificationsIds: request.body.id}}, {new: true});
+        response.send('Notification Deleted');
+    } catch (error) {
+        console.log(error);
+        response.status(500).send(error);
+    }
+});
+
+
+
+// Encrypt data
+function encrypt(text) {
+    const iv = crypto.randomBytes(16); // Generate a random IV (Initialization Vector)
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(secretKey, 'hex'), iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + encrypted;
+}
+
+// Decrypt data
+function decrypt(encryptedText) {
+    const iv = Buffer.from(encryptedText.slice(0, 32), 'hex'); // Extract the IV from the encrypted data
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(secretKey, 'hex'), iv);
+    encryptedText = encryptedText.slice(32); // Remove the IV from the encrypted data
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+}
+
+async function authenticateUser(request) {
+    if(!request.cookies.loggedStatus){
+        console.log('sloggato');
+        return false;
+    }
+    const token = jwt.verify(request.cookies.jwt, secretKey);
+    const user = await userModel.findOne({username: token.username}, {username: true, _id: true});
+    if(user != null && user._id.toHexString() === token.id){
+        return token.username;
+    } else {
+        return false;
+    }
+}
+
+function compareNotificationsDate(a, b){
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    if(dateA - dateB > 0){
+        return -1;
+    } else if(dateA - dateB < 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+function compareSquealsDate(a, b){
+    let dateA = new Date(a.date);
+    let dateB = new Date(b.date);
+    if(a.CM === 'popolare') {
+        dateA.setDate(dateA.getDate() + 3);
+    } else if(a.CM === 'impopolare') {
+        dateA.setDate(dateA.getDate() - 3);
+    }
+    if(b.CM === 'popolare') {
+        dateB.setDate(dateB.getDate() + 3);
+    } else if(b.CM === 'impopolare') {
+        dateB.setDate(dateB.getDate() - 3);
+    }
+
+    if(dateA - dateB > 0){
+        return -1;
+    } else if(dateA - dateB < 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
 
 
 server.listen(PORT, () => {

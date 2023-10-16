@@ -145,7 +145,7 @@ function PostBox({update}) {
             }
         ]);
     };
-    const [postType, setPostType] = useState(null);
+    const [postType, setPostType] = useState('');
 
     function getSquealBody() {
         if(postType === "geo"){
@@ -166,61 +166,61 @@ function PostBox({update}) {
         count.innerText = characters.length;
     }
 
-    function postSqueal(postType, squealBody) {
+    async function postSqueal(postType, squealBody) {
         const receivers = document.getElementById('receivers').value;
 
-        if(postType === "img") {
-            axios.post(`https://${getServerDomain()}/squeals/squeal/post_squeal`, {
+        if (postType === "img") {
+            await axios.post(`https://${getServerDomain()}/squeals/squeal/postsqueal`, {
                 img: squealBody,
                 receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
-                .then(function (response) {
+                .then((response) => {
                     console.log(response);
-                    update(currentKey => currentKey+1);
+                    update(currentKey => currentKey + 1);
                     document.getElementById("squealTextarea").value = "";
                     document.getElementById("receivers").value = "";
-                    cancelImgBody();
+                    cancelImgBody(setPostType);
                     setSquealError('');
                     setSquealResult('Squeal posted!');
                 })
-                .catch(function (error) {
+                .catch((error) => {
                     setSquealResult('');
                     setSquealError(error.response.data);
                     console.log(error);
                 });
-        } else if(postType === "geo") {
-            axios.post(`https://${getServerDomain()}/squeals/squeal/post_squeal`, {
+        } else if (postType === "geo") {
+            await axios.post(`https://${getServerDomain()}/squeals/squeal/postsqueal`, {
                 geolocation: [squealBody.lat.toString(), squealBody.lng.toString()],
                 receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
-                .then(function (response) {
+                .then((response) => {
                     console.log(response);
-                    update(currentKey => currentKey+1);
+                    update(currentKey => currentKey + 1);
                     document.getElementById("squealTextarea").value = "";
                     document.getElementById("receivers").value = "";
-                    cancelMapBody();
+                    cancelMapBody(setPostType);
                     setSquealError('');
                     setSquealResult('Squeal posted!');
                 })
-                .catch(function (error) {
+                .catch((error) => {
                     setSquealResult('');
                     setSquealError(error.response.data);
                     console.log(error);
                 });
         } else {
-            axios.post(`https://${getServerDomain()}/squeals/squeal/post_squeal`, {
+            await axios.post(`https://${getServerDomain()}/squeals/squeal/postsqueal`, {
                 text: squealBody,
                 receivers: receivers ? JSON.parse(receivers).map(user => user.value) : null
             }, {withCredentials: true})
-                .then(function (response) {
+                .then((response) => {
                     console.log(response);
-                    update(currentKey => currentKey+1);
+                    update(currentKey => currentKey + 1);
                     document.getElementById("squealTextarea").value = "";
                     document.getElementById("receivers").value = "";
                     setSquealError('');
                     setSquealResult('Squeal posted!');
                 })
-                .catch(function (error) {
+                .catch((error) => {
                     setSquealResult('');
                     setSquealError(error.response.data);
                     console.log(error);
@@ -343,7 +343,7 @@ function cancelImgBody(setPostType) {
     if(document.getElementById('squealTextarea').previousElementSibling.classList.contains('d-none')){
         document.getElementById('squealTextarea').previousElementSibling.classList.remove('d-none');
     }
-    document.getElementById("squealAttachContainer").removeChild(document.getElementById("squealAttachContainer").childNodes.item(0));
+    //document.getElementById("squealAttachContainer").removeChild(document.getElementById("squealAttachContainer").childNodes.item(0));
     setPostType('txt');
 }
 

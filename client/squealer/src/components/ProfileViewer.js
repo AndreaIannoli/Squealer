@@ -8,12 +8,13 @@ import ReactDOM from "react-dom/client";
 import {loadSqueals} from "./ScrollPane";
 import Spinner from "./Spinner";
 import React from "react";
-import {useLocation, useParams} from "react-router-dom";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 import BackToTop from "./BackToTop";
 import ChangePasswordModal from "./ChangePasswordModal";
 
 
 function ProfileViewer() {
+    const navigate = useNavigate();
     const [propic, setPropic] = useState(null);
     const [squeals, setSqueals] = useState(null);
     const { username } = useParams();

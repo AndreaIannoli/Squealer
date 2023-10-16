@@ -1,4 +1,4 @@
-import '../styles/Squeal.css';
+    import '../styles/Squeal.css';
 import React, {useEffect, useRef} from 'react';
 import {Link, Router, Route, useNavigate} from 'react-router-dom';
 import {Context, router} from "../index";
@@ -30,6 +30,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
     });
 
      */
+    const logged = document.cookie.includes('loggedStatus');
 
 
     function squealBody(text, img, geo) {
@@ -45,7 +46,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
 
     async function getSqueal() {
         try {
-            const response = await axios.get(`https://${getServerDomain()}/squeals?squealId=${resqueal}`, {withCredentials: true});
+            const response = await axios.get(`https://${getServerDomain()}/squeal?squealId=${resqueal}`, {withCredentials: true});
             return(response);
         } catch (error) {
             console.error(error);
@@ -61,10 +62,13 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
             setResquealCheck(await checkResqueal());
         }
         retrieveResqueal();
-        async function retrieveCheckReaction(){
-            setReactionCheck(await checkReaction(id, sessionStorage.getItem("username")));
+        if(logged) {
+            async function retrieveCheckReaction() {
+                setReactionCheck(await checkReaction(id, sessionStorage.getItem("username")));
+            }
+
+            retrieveCheckReaction();
         }
-        retrieveCheckReaction();
     }, []);
 
 
@@ -96,12 +100,6 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
         }
     }
 
-    async function checkReaction(squealId, username) {
-        const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/${squealId}?username=${username}`, {withCredentials: true});
-        if(response.data !== "unreacted"){
-            document.getElementById(response.data + id).style.color = "#1DA0F2";
-        }
-    }
     async function checkAdmin(){
         return await axios.get(`https://${getServerDomain()}/users/user/admin`, {withCredentials: true})
             .then(response => {
@@ -230,7 +228,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
 
         });
     }
-    ottieniIDSpan();
+   // ottieniIDSpan();
 
     return(
     <div className='container-fluid'>
@@ -267,6 +265,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
             <div className='col-12 text-black'>
                 {squealBody(text, img, geo)}
             </div>
+            { logged ?
             <div className='col-12 d-flex'>
                 <button className='btn postbox-btn me-auto' data-bs-toggle="modal" data-bs-target={'#' + 'resquealModal'+ id}><i className="bi bi-chat-left-quote-fill"></i></button>
 
@@ -303,6 +302,7 @@ function Squeal({from, username, propic, geo, img, text, id, date, resqueal, CM}
                     </i>
                 </div>
             </div>
+                : null}
             <ReSquealModal resquealModalId={'resquealModal'+ id} squealBody={squealBody(text, img, geo)} username={username} propic={propic} from={from} date={formatDate(date)} id={id}/>
         </div>
     </div>
@@ -361,7 +361,7 @@ export function checkForTags(text) {
 }
 
 async function giveNumberReactions(id, tipo){
-      return await axios.get(`https://${getServerDomain()}/squeals/squeal/reactions/number?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
+      return await axios.get(`https://${getServerDomain()}/squeals/squeal/reactions/reaction/number?squealId=${id}&reactionType=${tipo}`, {withCredentials: true})
         .then(response => {
                 //console.log("response data:: " + response.data);
                 //console.log("span" + tipo);
@@ -374,6 +374,13 @@ async function giveNumberReactions(id, tipo){
           .catch(error => {
                 console.log(error.message);
           });
+}
+
+async function checkReaction(squealId, username) {
+    const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/reactions/${squealId}?username=${username}`, {withCredentials: true});
+    if(response.data !== "unreacted"){
+        document.getElementById(response.data + squealId).style.color = "#1DA0F2";
+    }
 }
 
 export default Squeal;

@@ -76,7 +76,7 @@ function Navbar() {
                     </div>
 
                     {admin === "isAdmin" ?
-                        (<Link className='btn btn-primary btn-circle rounded-5 fs-5 fw-semibold ps-3 pe-3 w-100 mb-3 pe-auto' id='adminButton' to='/admin'>Admin</Link>
+                        (<Link className='btn btn-primary btn-circle rounded-5 fs-5 fw-semibold ps-3 pe-3 w-100 mb-3 pe-auto d-none d-md-block' id='adminButton' to='/admin'>Admin</Link>
                         ): null}
                 </div>
                 {!logged ?

@@ -127,8 +127,6 @@ function Registration() {
                             </div>
                         </form>
                     </div>
-                    <button className='btn btn-primary rounded-5 fs-5' onClick={ imageCheck }>Check Propic</button>
-                    <button className='btn btn-primary rounded-5 fs-5' onClick={ checkUsername }>Check User</button>
                 </div>
             </div>
         </div>

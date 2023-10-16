@@ -9,18 +9,23 @@ import {useNavigate, useParams} from "react-router-dom";
 
 function AdminScrollPane() {
     const navigate = useNavigate();
+    const logged = document.cookie.includes('loggedStatus');
+    if(!logged) {
+        navigate('/');
+    }
     const [squeals, setSqueals] = useState(null);
     const [key, forceUpdate] = useState(0);
     const [result,setResults]= useState();
     const [queryFilter, setQueryFilters]= useState("Sender");
     const [calendar, setCalendar]=useState();
-    const logged = document.cookie.includes('loggedStatus');
+    //const logged = document.cookie.includes('loggedStatus');
     const page = window.location.pathname;
     let { name } = useParams();
     async function retriveResults() {
         setResults(await loadFilteredSqueals());
 
     }
+    getAdmin();
     useEffect(() => {
 
         retrieveSqueals();
@@ -58,14 +63,14 @@ function AdminScrollPane() {
             console.error(e);
         }
     }
-    getAdmin()
+
     async function callLoadDateSqueals(value){
         setResults( await loadDateSqueals(value));
     }
     async function loadDateSqueals(value ) {
         try{
 
-            const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/search_date?value=${value}`, {withCredentials: true});
+            const response = await axios.get(`https://${getServerDomain()}/admin/search_date?value=${value}`, {withCredentials: true});
             const SquealsReceiver = [];
 
             for (let entry of response.data) {
@@ -165,7 +170,7 @@ export async function loadSqueals() {
 
 async function loadAllSqueals() {
     try {
-        const response = await axios.get(`https://${getServerDomain()}/squeals/squealmerged_squeals`, { withCredentials: true });
+        const response = await axios.get(`https://${getServerDomain()}/admin/squealmerged_squeals`, { withCredentials: true });
         const SquealsComponents = [];
 
         for (let entry of response.data) {
@@ -200,7 +205,7 @@ async function filtringSelectedBar(){
 
 async function loadFilteredSqueals() {
     try{
-        const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/search_sender?value=${document.getElementById("filterSearch").value}`, {withCredentials: true});
+        const response = await axios.get(`https://${getServerDomain()}/admin/search_sender?value=${document.getElementById("filterSearch").value}`, {withCredentials: true});
         const SquealsSenders = [];
 
         for (let entry of response.data) {
@@ -229,7 +234,7 @@ async function loadFilteredSqueals() {
 }
 async function loadReceiverSqueals() {
     try{
-        const response = await axios.get(`https://${getServerDomain()}/squeals/squeal/search_receiver?value=${document.getElementById("filterReceiverSearch").value}`, {withCredentials: true});
+        const response = await axios.get(`https://${getServerDomain()}/admin/search_receiver?value=${document.getElementById("filterReceiverSearch").value}`, {withCredentials: true});
         const SquealsReceiver = [];
 
         for (let entry of response.data) {

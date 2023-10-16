@@ -7,9 +7,10 @@ import Squeal from "./Squeal";
 import {useNavigate} from "react-router-dom";
 
 function ChannelCreator() {
+    const navigat = useNavigate();
     const logged = document.cookie.includes('loggedStatus');
     if(!logged) {
-        navigate('/');
+        navigat('/');
     }
     useEffect(() => {
         var inputReceivers = document.getElementById('owners'),

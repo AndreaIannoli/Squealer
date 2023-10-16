@@ -111,9 +111,10 @@ function ChannelViewer() {
     }
 
     async function isSubscribed() {
-        const response = await axios.get(`https://${getServerDomain()}/channels/${name}?username=${sessionStorage.getItem("username")}`, {withCredentials: true}).catch((e) => {
+        const response = await axios.get(`https://${getServerDomain()}/users/user/subscriptions/${name}?username=${sessionStorage.getItem("username")}`, {withCredentials: true}).catch((e) => {
             console.log(e);
         });
+        console.log(response);
         if(response.data === "Subscribed"){
             return true;
         } else {
@@ -300,168 +301,170 @@ function ChannelViewer() {
             <div className='row d-flex justify-content-center p-0 h-100'>
                 <div className='col-12 d-flex flex-column align-items-center p-0' id='scrollpaneProfileV'>
                     <div id="anchorRelatedSqueals"/>
-                    <div className='col-11 mx-3 mb-md-5 px-4 pt-5 pb-3 d-flex justify-content-center align-items-center bg-white rounded-bottom-5 gap-3'>
-                        <div className='fs-3 text-black text-center mt-5 mt-md-0 me-auto'>
+                    <div className='col-11 mx-3 mb-md-5 px-4 pt-5 pb-3 bg-white rounded-bottom-5'>
+                        <div className='col-12 fs-3 text-black text-center mt-5 mt-md-0 me-auto'>
                             {['§', name]}
                         </div>
-                        {owner || adminUser ?
-                            <button className='btn btn-primary rounded-5 mt-5 mt-md-0 ' data-bs-toggle="modal" data-bs-target={'[id="' + modalId + '"]'}>Moderate Channel</button>
-                            : null}
-                        {owner || adminUser ?
-                            <div className="modal fade" tabIndex="-1" aria-labelledby="modalChannelModeration"
-                                 aria-hidden="true" data-backdrop="false" id={modalId}>
-                                <div className="modal-dialog modal-dialog-centered">
-                                    <div className="modal-content shadow">
-                                        <div className="modal-header">
-                                            <h5 className="modal-title" id="modalChannelModerationLabel">Moderate Channel</h5>
-                                            <button type="button" className="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                        </div>
-                                        <div className="modal-body">
-                                            {squealerChannel && adminUser ? null :
-                                                <div className='col-12 d-flex justify-content-center mt-2'>
-                                                    <div className="fs-6">Public</div>
-                                                    <div className="form-check form-switch ms-3 me-2">
-                                                        <input className="form-check-input" type="checkbox" id="privacySwitch" checked={privacy} onChange={event => setPrivacy(event.target.checked)}/>
+                        <div className='d-flex justify-content-between'>
+                            {owner || adminUser ?
+                                <button className='col-4 col-md-4 btn btn-primary rounded-5 mt-md-0 ' data-bs-toggle="modal" data-bs-target={'[id="' + modalId + '"]'}>Moderate Channel</button>
+                                : null}
+                            {owner || adminUser ?
+                                <div className="modal fade" tabIndex="-1" aria-labelledby="modalChannelModeration"
+                                     aria-hidden="true" data-backdrop="false" id={modalId}>
+                                    <div className="modal-dialog modal-dialog-centered">
+                                        <div className="modal-content shadow">
+                                            <div className="modal-header">
+                                                <h5 className="modal-title" id="modalChannelModerationLabel">Moderate Channel</h5>
+                                                <button type="button" className="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                            </div>
+                                            <div className="modal-body">
+                                                {squealerChannel && adminUser ? null :
+                                                    <div className='col-12 d-flex justify-content-center mt-2'>
+                                                        <div className="fs-6">Public</div>
+                                                        <div className="form-check form-switch ms-3 me-2">
+                                                            <input className="form-check-input" type="checkbox" id="privacySwitch" checked={privacy} onChange={event => setPrivacy(event.target.checked)}/>
+                                                        </div>
+                                                        <div className="fs-6">Private</div>
+                                                    </div>}
+                                                {squealerChannel && adminUser ? null :
+                                                    <div className='col-12 d-flex justify-content-center my-3'>
+                                                        <div className="fs-6">free writing</div>
+                                                        <div className="form-check form-switch ms-3 me-2">
+                                                            <input className="form-check-input" type="checkbox" id="writingRestrictionSwitch" checked={writingRestriction} onChange={event => setChannelWritingRestriction(event.target.checked)}/>
+                                                        </div>
+                                                        <div className="fs-6">writing restricted</div>
                                                     </div>
-                                                    <div className="fs-6">Private</div>
-                                                </div>}
-                                            {squealerChannel && adminUser ? null :
-                                                <div className='col-12 d-flex justify-content-center my-3'>
-                                                    <div className="fs-6">free writing</div>
-                                                    <div className="form-check form-switch ms-3 me-2">
-                                                        <input className="form-check-input" type="checkbox" id="writingRestrictionSwitch" checked={writingRestriction} onChange={event => setChannelWritingRestriction(event.target.checked)}/>
-                                                    </div>
-                                                    <div className="fs-6">writing restricted</div>
-                                                </div>
-                                            }
+                                                }
 
-                                            <nav>
-                                                <div className="nav nav-tabs" id="nav-tab" role="tablist">
-                                                    <button className="nav-link active" id="nav-description-tab" data-bs-toggle="tab" data-bs-target="#nav-description" type="button" role="tab" aria-controls="nav-members" aria-selected="true">Description</button>
-                                                    {squealerChannel && adminUser ? null :
-                                                        <button className="nav-link" id="nav-owners-tab" data-bs-toggle="tab" data-bs-target="#nav-owners" type="button" role="tab" aria-controls="nav-owners" aria-selected="false">Owners</button>
-                                                    }
-                                                    {squealerChannel && adminUser ? null :
-                                                        (
-                                                            writingRestriction ?
-                                                                <button className="nav-link" id="nav-writers-tab" data-bs-toggle="tab" data-bs-target="#nav-writers" type="button" role="tab" aria-controls="nav-writers" aria-selected="false">Writers</button>
-                                                                :
-                                                                null
-                                                        )
-                                                    }
-                                                    {squealerChannel && adminUser ? null :
-                                                        <button className="nav-link" id="nav-members-tab" data-bs-toggle="tab" data-bs-target="#nav-members" type="button" role="tab" aria-controls="nav-members" aria-selected="false">Add member</button>
-                                                    }
-                                                </div>
-                                            </nav>
-
-                                            <div className="tab-content">
-                                                <div className="tab-pane fade show active" role="tabpanel" id="nav-description">
-                                                    <div className='col-12 d-flex flex-column'>
-                                                        <label htmlFor="exampleFormControlTextarea1" className='mt-2'>Channel description</label>
-                                                        <textarea className="form-control bg-transparent rounded-4" id="exampleFormControlTextarea1" rows="3" value={channelDescription} onChange={event => setChannelDescription(event.target.value)}></textarea>
-                                                        <button className='btn btn-primary rounded-5 mt-3' onClick={() => {updateDescription()}}>Update</button>
-                                                        {channelDesError ?
-                                                            <small className="text-danger">{channelDesError}</small>
-                                                            :
-                                                            (channelDesResult ? <small className="text-success">{channelDesResult}</small> : null)
+                                                <nav>
+                                                    <div className="nav nav-tabs" id="nav-tab" role="tablist">
+                                                        <button className="nav-link active" id="nav-description-tab" data-bs-toggle="tab" data-bs-target="#nav-description" type="button" role="tab" aria-controls="nav-members" aria-selected="true">Description</button>
+                                                        {squealerChannel && adminUser ? null :
+                                                            <button className="nav-link" id="nav-owners-tab" data-bs-toggle="tab" data-bs-target="#nav-owners" type="button" role="tab" aria-controls="nav-owners" aria-selected="false">Owners</button>
+                                                        }
+                                                        {squealerChannel && adminUser ? null :
+                                                            (
+                                                                writingRestriction ?
+                                                                    <button className="nav-link" id="nav-writers-tab" data-bs-toggle="tab" data-bs-target="#nav-writers" type="button" role="tab" aria-controls="nav-writers" aria-selected="false">Writers</button>
+                                                                    :
+                                                                    null
+                                                            )
+                                                        }
+                                                        {squealerChannel && adminUser ? null :
+                                                            <button className="nav-link" id="nav-members-tab" data-bs-toggle="tab" data-bs-target="#nav-members" type="button" role="tab" aria-controls="nav-members" aria-selected="false">Add member</button>
                                                         }
                                                     </div>
-                                                </div>
-                                                <div className="tab-pane fade" role="tabpanel" id="nav-owners">
-                                                    <div className="col-12">
-                                                        <label htmlFor="ownerModerationListInput" className="form-label">Promote to owner</label>
-                                                        <input className="form-control" list="datalistOptions" id="ownerModerationListInput" placeholder="Type to search User to promote..." value={userToPromote} onChange={event => {setUserToPromote(event.target.value); retrieveUserToPromote()}}/>
-                                                        <datalist id="datalistOptions">
-                                                            {
-                                                                toPromote
-                                                            }
-                                                        </datalist>
-                                                        <div className="col-12">
-                                                            {toPromoteError ?
-                                                                <small className="text-danger">{toPromoteError}</small>
+                                                </nav>
+
+                                                <div className="tab-content">
+                                                    <div className="tab-pane fade show active" role="tabpanel" id="nav-description">
+                                                        <div className='col-12 d-flex flex-column'>
+                                                            <label htmlFor="exampleFormControlTextarea1" className='mt-2'>Channel description</label>
+                                                            <textarea className="form-control bg-transparent rounded-4" id="exampleFormControlTextarea1" rows="3" value={channelDescription} onChange={event => setChannelDescription(event.target.value)}></textarea>
+                                                            <button className='btn btn-primary rounded-5 mt-3' onClick={() => {updateDescription()}}>Update</button>
+                                                            {channelDesError ?
+                                                                <small className="text-danger">{channelDesError}</small>
                                                                 :
-                                                                (toPromoteResult ? <small className="text-success">{toPromoteResult}</small> : null)
+                                                                (channelDesResult ? <small className="text-success">{channelDesResult}</small> : null)
                                                             }
-                                                        </div>
-                                                        <button className="btn btn-primary rounded-5 mt-2" onClick={() => {promoteToOwner(); setUserToPromote(''); getOwnersList()}}>Promote</button>
-                                                        <div className="fs-6 mt-3 mb-1">Channel owners</div>
-                                                        <div className="col-12 rounded-5 vh-50 overflow-y-scroll d-flex flex-column gap-2">
-                                                            {owners}
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div className="tab-pane fade" role="tabpanel" id="nav-writers">
-                                                    <div className="col-12">
-                                                        <label htmlFor="writerModerationListInput" className="form-label">Promote to writer</label>
-                                                        <input className="form-control" list="datalistOptions" id="writerModerationListInput" placeholder="Type to search User to promote..." value={userToPromoteWriter} onChange={event => {setUserToPromoteWriter(event.target.value); retrieveUserToPromote()}}/>
-                                                        <datalist id="datalistOptions">
-                                                            {
-                                                                toPromote
-                                                            }
-                                                        </datalist>
+                                                    <div className="tab-pane fade" role="tabpanel" id="nav-owners">
                                                         <div className="col-12">
-                                                            {toPromoteWriterError ?
-                                                                <small className="text-danger">{toPromoteWriterError}</small>
-                                                                :
-                                                                (toPromoteWriterResult ? <small className="text-success">{toPromoteWriterResult}</small> : null)
-                                                            }
-                                                        </div>
-                                                        <button className="btn btn-primary rounded-5 mt-2" onClick={() => {promoteToWriter(); setUserToPromoteWriter(''); getWritersList();}}>Promote</button>
-                                                        <div className="fs-6 mt-3 mb-1">Channel writers:</div>
-                                                        <div className="col-12 rounded-5 vh-50 overflow-y-scroll d-flex flex-column gap-2">
-                                                            {writers.length > 0 ? writers : 'There\'s no writer'}
+                                                            <label htmlFor="ownerModerationListInput" className="form-label">Promote to owner</label>
+                                                            <input className="form-control" list="datalistOptions" id="ownerModerationListInput" placeholder="Type to search User to promote..." value={userToPromote} onChange={event => {setUserToPromote(event.target.value); retrieveUserToPromote()}}/>
+                                                            <datalist id="datalistOptions">
+                                                                {
+                                                                    toPromote
+                                                                }
+                                                            </datalist>
+                                                            <div className="col-12">
+                                                                {toPromoteError ?
+                                                                    <small className="text-danger">{toPromoteError}</small>
+                                                                    :
+                                                                    (toPromoteResult ? <small className="text-success">{toPromoteResult}</small> : null)
+                                                                }
+                                                            </div>
+                                                            <button className="btn btn-primary rounded-5 mt-2" onClick={() => {promoteToOwner(); setUserToPromote(''); getOwnersList()}}>Promote</button>
+                                                            <div className="fs-6 mt-3 mb-1">Channel owners</div>
+                                                            <div className="col-12 rounded-5 vh-50 overflow-y-scroll d-flex flex-column gap-2">
+                                                                {owners}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div className="tab-pane fade" role="tabpanel" id="nav-members">
-                                                    <div className="col-12">
-                                                        <label htmlFor="memberModerationListInput" className="form-label">Add member</label>
-                                                        <input className="form-control" list="datalistOptions" id="memberModerationListInput" placeholder="Type to search User to promote..." value={userToAddMember} onChange={event => {setUserToAddMember(event.target.value); retrieveUserToPromote()}}/>
-                                                        <datalist id="datalistOptions">
-                                                            {
-                                                                toPromote
-                                                            }
-                                                        </datalist>
+                                                    <div className="tab-pane fade" role="tabpanel" id="nav-writers">
                                                         <div className="col-12">
-                                                            {toAddMemberError ?
-                                                                <small className="text-danger">{toAddMemberError}</small>
-                                                                :
-                                                                (toAddMemberResult ? <small className="text-success">{toAddMemberResult}</small> : null)
-                                                            }
+                                                            <label htmlFor="writerModerationListInput" className="form-label">Promote to writer</label>
+                                                            <input className="form-control" list="datalistOptions" id="writerModerationListInput" placeholder="Type to search User to promote..." value={userToPromoteWriter} onChange={event => {setUserToPromoteWriter(event.target.value); retrieveUserToPromote()}}/>
+                                                            <datalist id="datalistOptions">
+                                                                {
+                                                                    toPromote
+                                                                }
+                                                            </datalist>
+                                                            <div className="col-12">
+                                                                {toPromoteWriterError ?
+                                                                    <small className="text-danger">{toPromoteWriterError}</small>
+                                                                    :
+                                                                    (toPromoteWriterResult ? <small className="text-success">{toPromoteWriterResult}</small> : null)
+                                                                }
+                                                            </div>
+                                                            <button className="btn btn-primary rounded-5 mt-2" onClick={() => {promoteToWriter(); setUserToPromoteWriter(''); getWritersList();}}>Promote</button>
+                                                            <div className="fs-6 mt-3 mb-1">Channel writers:</div>
+                                                            <div className="col-12 rounded-5 vh-50 overflow-y-scroll d-flex flex-column gap-2">
+                                                                {writers.length > 0 ? writers : 'There\'s no writer'}
+                                                            </div>
                                                         </div>
-                                                        <button className="btn btn-primary rounded-5 mt-2" onClick={() => {addMember(); setUserToAddMember('');}}>Add Member</button>
-                                                        <div htmlFor="memberRModerationListInput" className="form-label mt-4">Remove member</div>
-                                                        <input className="form-control" list="datalistOptions" id="memberRModerationListInput" placeholder="Type to search User to promote..." value={userToRemoveMember} onChange={event => {setUserToRemoveMember(event.target.value); retrieveUserToPromote()}}/>
-                                                        <datalist id="datalistOptions">
-                                                            {
-                                                                toPromote
-                                                            }
-                                                        </datalist>
+                                                    </div>
+                                                    <div className="tab-pane fade" role="tabpanel" id="nav-members">
                                                         <div className="col-12">
-                                                            {toRemoveMemberError ?
-                                                                <small className="text-danger">{toRemoveMemberError}</small>
-                                                                :
-                                                                (toRemoveMemberResult ? <small className="text-success">{toRemoveMemberResult}</small> : null)
-                                                            }
+                                                            <label htmlFor="memberModerationListInput" className="form-label">Add member</label>
+                                                            <input className="form-control" list="datalistOptions" id="memberModerationListInput" placeholder="Type to search User to promote..." value={userToAddMember} onChange={event => {setUserToAddMember(event.target.value); retrieveUserToPromote()}}/>
+                                                            <datalist id="datalistOptions">
+                                                                {
+                                                                    toPromote
+                                                                }
+                                                            </datalist>
+                                                            <div className="col-12">
+                                                                {toAddMemberError ?
+                                                                    <small className="text-danger">{toAddMemberError}</small>
+                                                                    :
+                                                                    (toAddMemberResult ? <small className="text-success">{toAddMemberResult}</small> : null)
+                                                                }
+                                                            </div>
+                                                            <button className="btn btn-primary rounded-5 mt-2" onClick={() => {addMember(); setUserToAddMember('');}}>Add Member</button>
+                                                            <div htmlFor="memberRModerationListInput" className="form-label mt-4">Remove member</div>
+                                                            <input className="form-control" list="datalistOptions" id="memberRModerationListInput" placeholder="Type to search User to promote..." value={userToRemoveMember} onChange={event => {setUserToRemoveMember(event.target.value); retrieveUserToPromote()}}/>
+                                                            <datalist id="datalistOptions">
+                                                                {
+                                                                    toPromote
+                                                                }
+                                                            </datalist>
+                                                            <div className="col-12">
+                                                                {toRemoveMemberError ?
+                                                                    <small className="text-danger">{toRemoveMemberError}</small>
+                                                                    :
+                                                                    (toRemoveMemberResult ? <small className="text-success">{toRemoveMemberResult}</small> : null)
+                                                                }
+                                                            </div>
+                                                            <button className="btn btn-primary rounded-5 mt-2" onClick={() => {removeMember(); setUserToRemoveMember('');}}>Remove Member</button>
                                                         </div>
-                                                        <button className="btn btn-primary rounded-5 mt-2" onClick={() => {removeMember(); setUserToRemoveMember('');}}>Remove Member</button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            :
-                            null
-                        }
-                        {!squealerChannel ?
-                            (subscribed ? <button className='btn btn-secondary rounded-5 mt-5 mt-md-0 ' onClick={() => {unsubscribe()}}>Unsubscribe</button> : <button className='btn btn-primary rounded-5 mt-5 mt-md-0' onClick={() => {subscribe()}}>Subscribe</button>)
-                            :
-                            null
-                        }
+                                :
+                                null
+                            }
+                            {!squealerChannel ?
+                                (subscribed ? <button className='col-5 col-md-3 btn btn-secondary rounded-5 mt-md-0' onClick={() => {unsubscribe()}}>Unsubscribe</button> : <button className='col-5 col-md-3 btn btn-primary rounded-5 mt-md-0' onClick={() => {subscribe()}}>Subscribe</button>)
+                                :
+                                null
+                            }
+                        </div>
                     </div>
 
                     <div className='col-6 d-flex justify-content-center sticky-top pt-2 pt-md-0'>
